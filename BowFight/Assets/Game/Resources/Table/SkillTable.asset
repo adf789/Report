@@ -1,0 +1,72 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-5204119470801265356
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 371705ece2f2f4243a833a0b72097981, type: 3}
+  m_Name: 001_JumpShot
+  m_EditorClassIdentifier: 
+  _id: 1
+  _name: JumpShot
+  _thumbnailPath: Sprites/SkillIcons/skill_023
+  _coolTime: 5
+  _isDirect: 0
+  _isJump: 1
+--- !u!114 &-1179638294223704163
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 371705ece2f2f4243a833a0b72097981, type: 3}
+  m_Name: 003_DirectJumpShot
+  m_EditorClassIdentifier: 
+  _id: 3
+  _name: DirectJumpShot
+  _thumbnailPath: Sprites/SkillIcons/skill_024
+  _coolTime: 8
+  _isDirect: 1
+  _isJump: 1
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 415751e6898791b439c0452d12bad5b0, type: 3}
+  m_Name: SkillTable
+  m_EditorClassIdentifier: 
+  datas:
+  - {fileID: -5204119470801265356}
+  - {fileID: 576545588559030738}
+  - {fileID: -1179638294223704163}
+--- !u!114 &576545588559030738
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 371705ece2f2f4243a833a0b72097981, type: 3}
+  m_Name: 002_DirectShot
+  m_EditorClassIdentifier: 
+  _id: 2
+  _name: DirectShot
+  _thumbnailPath: Sprites/SkillIcons/skill_028
+  _coolTime: 7
+  _isDirect: 1
+  _isJump: 0
