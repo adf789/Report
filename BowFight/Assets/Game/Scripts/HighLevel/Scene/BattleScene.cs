@@ -66,7 +66,7 @@ public class BattleScene : MonoBehaviour
             _aiPlayer.Archer.SetEvents(OnEventUpdateAIPlayerBuffs,
             OnEventUpdateAIPlayerHp,
             null,
-            OnEventShowAIPlayerDamage);
+            OnEventShowDamage);
 
             _aiPlayer.Initialize(skillDatas);
             _aiPlayer.SetMoveLimit(moveAreaBounds.min.x, moveAreaBounds.max.x);
@@ -83,7 +83,7 @@ public class BattleScene : MonoBehaviour
             _player.Archer.SetEvents(OnEventUpdatePlayerBuffs,
             OnEventUpdatePlayerHp,
             OnEventShowBlind,
-            OnEventShowPlayerDamage);
+            OnEventShowDamage);
 
             _player.Initialize(skillDatas);
             _player.SetMoveLimit(moveAreaBounds.min.x, moveAreaBounds.max.x);
@@ -170,10 +170,12 @@ public class BattleScene : MonoBehaviour
         _battleUI.ShowPlayerStateBar();
     }
 
-    private void OnEventShowPlayerDamage(Vector2 position, int damage)
+    private void OnEventShowDamage(Vector3 position, int damage)
     {
         if (!_battleUI)
             return;
+
+        _battleUI.ShowDamage(position, damage);
     }
 
     private void OnEventUpdateAIPlayerHp()
@@ -194,12 +196,6 @@ public class BattleScene : MonoBehaviour
         UpdateUIModelByPlayerBuffs(false, true);
 
         _battleUI.ShowAIPlayerStateBar();
-    }
-
-    private void OnEventShowAIPlayerDamage(Vector2 position, int damage)
-    {
-        if (!_battleUI)
-            return;
     }
 
     private void OnEventShowBlind(bool isActive)

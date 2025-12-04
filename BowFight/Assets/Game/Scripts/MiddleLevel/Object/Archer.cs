@@ -43,7 +43,7 @@ public class Archer : MonoBehaviour, ITarget
     private Action _onEventUpdateBuffUI = null;
     private Action _onEventUpdateHp = null;
     private Action<bool> _onEventBlind = null;
-    private Action<Vector2, int> _onEventShowDamage = null;
+    private Action<Vector3, int> _onEventShowDamage = null;
 
     private readonly float UPDATE_BUFF_TIME = 0.1f;
 
@@ -69,7 +69,7 @@ public class Archer : MonoBehaviour, ITarget
     public void SetEvents(Action onEventUpdateBuffUI,
     Action onEventUpdateHp,
     Action<bool> onEventBlind,
-    Action<Vector2, int> onEventShowDamage)
+    Action<Vector3, int> onEventShowDamage)
     {
         _onEventUpdateBuffUI = onEventUpdateBuffUI;
         _onEventUpdateHp = onEventUpdateHp;
@@ -164,8 +164,7 @@ public class Archer : MonoBehaviour, ITarget
     {
         // 데미지 적용
         AddHp(-arrow.Damage);
-        var position = ConvertToScreenPosition(arrow.transform.position);
-        _onEventShowDamage?.Invoke(position, (int)arrow.Damage);
+        _onEventShowDamage?.Invoke(arrow.transform.position, (int)arrow.Damage);
 
         // 버프 적용
         if (arrow.SkillData != null
@@ -264,10 +263,13 @@ public class Archer : MonoBehaviour, ITarget
             case BuffType.Burning:
             case BuffType.Poison:
                 {
-                    AddHp(-affectValue);
+                    if (affectValue > 0)
+                    {
+                        AddHp(-affectValue);
 
-                    var position = ConvertToScreenPosition(GetRandomPosition());
-                    _onEventShowDamage?.Invoke(position, (int)affectValue);
+                        var position = GetRandomPosition();
+                        _onEventShowDamage?.Invoke(position, (int)affectValue);
+                    }
                 }
                 break;
 
@@ -297,10 +299,13 @@ public class Archer : MonoBehaviour, ITarget
 
             case BuffType.Heal:
                 {
-                    AddHp(affectValue);
+                    if (affectValue > 0)
+                    {
+                        AddHp(affectValue);
 
-                    var position = ConvertToScreenPosition(GetRandomPosition());
-                    _onEventShowDamage?.Invoke(position, (int)affectValue);
+                        var position = GetRandomPosition();
+                        _onEventShowDamage?.Invoke(position, (int)affectValue);
+                    }
                 }
                 break;
         }
@@ -361,11 +366,6 @@ public class Archer : MonoBehaviour, ITarget
             default:
                 return null;
         }
-    }
-
-    private Vector2 ConvertToScreenPosition(Vector3 position)
-    {
-        return Camera.main.WorldToScreenPoint(position);
     }
 
     private Vector3 GetRandomPosition()

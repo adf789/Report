@@ -1,0 +1,107 @@
+using Cysharp.Threading.Tasks;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class DamageUnit : BaseUnit<DamageUnitModel>, IReusable
+{
+    [SerializeField] private TextMeshProUGUI _damageText;
+
+    [Header("Animation Settings")]
+    [SerializeField] private float _duration = 1f;
+    [SerializeField] private float _minHeight = 50f;
+    [SerializeField] private float _maxHeight = 100f;
+    [SerializeField] private float _horizontalRange = 30f;
+    [SerializeField] private AnimationCurve _heightCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 0.2f);
+    [SerializeField] private AnimationCurve _alphaCurve = AnimationCurve.Linear(0f, 1f, 1f, 0f);
+
+    private CanvasGroup _canvasGroup;
+    private RectTransform _rectTransform;
+    private System.Action<DamageUnit> _onEventReturnToPool;
+
+    private void Awake()
+    {
+        if (_rectTransform == null)
+            _rectTransform = GetComponent<RectTransform>();
+
+        _canvasGroup = GetComponent<CanvasGroup>();
+        if (_canvasGroup == null)
+            _canvasGroup = gameObject.AddComponent<CanvasGroup>();
+    }
+
+    [ContextMenu("Show")]
+    public override void Show()
+    {
+        ShowDamage();
+        PlayAnimation().Forget();
+    }
+
+    private void ShowDamage()
+    {
+        _damageText.text = Model.Damage.ToString("n0");
+    }
+
+    private async UniTaskVoid PlayAnimation()
+    {
+        // 랜덤 방향과 높이 설정
+        float randomHeight = Random.Range(_minHeight, _maxHeight);
+        float randomX = Random.Range(-_horizontalRange, _horizontalRange);
+
+        Vector2 startPos = _rectTransform.anchoredPosition;
+
+        // 초기 상태 설정
+        _canvasGroup.alpha = 1f;
+
+        float elapsed = 0f;
+
+        while (elapsed < _duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / _duration;
+
+            // 포물선 움직임 (높이)
+            float heightValue = _heightCurve.Evaluate(t);
+
+            // 수평 이동 (선형)
+            Vector2 currentPos = startPos + new Vector2(
+                randomX * t,
+                randomHeight * heightValue
+            );
+
+            _rectTransform.anchoredPosition = currentPos;
+
+            // 페이드 아웃
+            _canvasGroup.alpha = _alphaCurve.Evaluate(t);
+
+            await UniTask.Yield();
+        }
+
+        // 애니메이션 종료 후 비활성화
+        gameObject.SetActive(false);
+    }
+
+    public void SetEventReturnToPool(System.Action<DamageUnit> onEvent)
+    {
+        _onEventReturnToPool = onEvent;
+    }
+
+    public void Initialize()
+    {
+
+    }
+
+    public void SetActive(bool isActive)
+    {
+        gameObject.SetActive(isActive);
+    }
+
+    public void ReturnToPool()
+    {
+        _onEventReturnToPool?.Invoke(this);
+    }
+
+    public void ResetEvents()
+    {
+        _onEventReturnToPool = null;
+    }
+}

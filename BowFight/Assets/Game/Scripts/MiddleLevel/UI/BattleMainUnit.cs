@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class BattleMainUnit : BaseUnit<BattleMainUnitModel>
@@ -8,11 +9,17 @@ public class BattleMainUnit : BaseUnit<BattleMainUnitModel>
     [SerializeField] private GameObject _blind;
     [SerializeField] private Transform _blindCircle;
     [SerializeField] private SkillUnit[] _skillUnits;
+    [SerializeField] private DamageObjectPool _damagePool;
 
     private Camera _mainCamera;
     private Camera _viewCamera;
 
     private Func<Vector3> _onEventBlindTargetPosition = null;
+
+    void Start()
+    {
+        _damagePool.Initialize();
+    }
 
     public override void Show()
     {
@@ -25,10 +32,11 @@ public class BattleMainUnit : BaseUnit<BattleMainUnitModel>
     {
         if (_blind.activeSelf)
         {
-            var screenPoint = _mainCamera.WorldToScreenPoint(GetBlindTargetPosition());
+            var targetPosition = GetBlindTargetPosition();
+            var parent = transform.parent as RectTransform;
+            var localPos = GetLocalPosition(parent, targetPosition);
 
-            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(transform.parent as RectTransform, screenPoint, _viewCamera, out var localPos))
-                _blindCircle.localPosition = localPos;
+            _blindCircle.localPosition = localPos;
         }
     }
 
@@ -63,6 +71,20 @@ public class BattleMainUnit : BaseUnit<BattleMainUnitModel>
         }
     }
 
+    public void ShowDamage(Vector3 position, float damage)
+    {
+        var parent = _damagePool.transform as RectTransform;
+        var localPos = GetLocalPosition(parent, position);
+        var damageUnit = _damagePool.Get();
+
+        damageUnit.transform.localPosition = localPos;
+        damageUnit.SetModel(new DamageUnitModel((int)damage));
+        damageUnit.SetEventReturnToPool(OnEventReturnToDamagePool);
+
+        damageUnit.Show();
+        damageUnit.SetActive(true);
+    }
+
     public void SetCamera(Camera main, Camera view)
     {
         _mainCamera = main;
@@ -87,6 +109,16 @@ public class BattleMainUnit : BaseUnit<BattleMainUnitModel>
         return _onEventBlindTargetPosition();
     }
 
+    private Vector3 GetLocalPosition(RectTransform rectTransform, Vector3 position)
+    {
+        var screenPoint = _mainCamera.WorldToScreenPoint(position);
+
+        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(rectTransform, screenPoint, _viewCamera, out var localPos))
+            return localPos;
+
+        return Vector3.zero;
+    }
+
     public void OnPointDownMove(bool isLeft)
     {
         if (isLeft)
@@ -98,5 +130,10 @@ public class BattleMainUnit : BaseUnit<BattleMainUnitModel>
     public void OnPointUpMove(bool isLeft)
     {
         Model.OnEventMoveStop?.Invoke();
+    }
+
+    private void OnEventReturnToDamagePool(DamageUnit damageUnit)
+    {
+        _damagePool.Add(damageUnit);
     }
 }
