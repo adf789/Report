@@ -10,12 +10,12 @@ public class PlayerController : BaseController
 
     public void LeftMove()
     {
-        _archer.Move(MoveState.LeftMove);
+        _archer.Move(MoveState.BackwardMove);
     }
 
     public void RightMove()
     {
-        _archer.Move(MoveState.RightMove);
+        _archer.Move(MoveState.ForwardMove);
     }
 
     public void StopMove()

@@ -5,6 +5,7 @@ using UnityEngine;
 using System;
 using System.Reflection;
 using System.Text;
+using System.Collections;
 
 [CustomEditor(typeof(BaseTable), true)]
 public class BaseTableInspector : Editor
@@ -17,7 +18,7 @@ public class BaseTableInspector : Editor
     // UI 상태
     private bool mainFoldout = true;
     private List<bool> itemFoldouts = new List<bool>();
-    private bool isDirty = false;
+    private List<Texture2D> viewTextures = new List<Texture2D>();
 
     private void OnEnable()
     {
@@ -38,6 +39,7 @@ public class BaseTableInspector : Editor
         }
 
         RefreshItemFoldouts();
+        InitialzeSprites();
     }
 
     private void RefreshItemFoldouts()
@@ -51,6 +53,40 @@ public class BaseTableInspector : Editor
             itemFoldouts.RemoveAt(itemFoldouts.Count - 1);
     }
 
+    private void RefreshViewTextures()
+    {
+        int itemCount = GetItemCount();
+
+        while (viewTextures.Count < itemCount)
+            viewTextures.Add(null);
+
+        while (viewTextures.Count > itemCount)
+            viewTextures.RemoveAt(viewTextures.Count - 1);
+    }
+
+    private void InitialzeSprites()
+    {
+        foreach (var item in GetAllItems())
+        {
+            if (item is not BaseTableData data)
+                break;
+
+            var serializedItem = new SerializedObject(data);
+            var thumbnailProperty = serializedItem.FindProperty("_thumbnail");
+            var path = thumbnailProperty.stringValue;
+
+            if (string.IsNullOrEmpty(path))
+            {
+                viewTextures.Add(null);
+            }
+            else
+            {
+                Texture2D texture = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Game/Resources/{path}.png");
+                viewTextures.Add(texture);
+            }
+        }
+    }
+
     private int GetItemCount()
     {
         if (getDataCountMethod != null)
@@ -58,10 +94,10 @@ public class BaseTableInspector : Editor
         return 0;
     }
 
-    private System.Collections.IList GetAllItems()
+    private IList GetAllItems()
     {
         if (getAllDatasMethod != null)
-            return (System.Collections.IList)getAllDatasMethod.Invoke(baseTable, null);
+            return (IList)getAllDatasMethod.Invoke(baseTable, null);
         return null;
     }
 
@@ -76,7 +112,6 @@ public class BaseTableInspector : Editor
         {
             EditorUtility.SetDirty(target);
             serializedObject.ApplyModifiedProperties();
-            isDirty = false;
         }
     }
 
@@ -108,24 +143,16 @@ public class BaseTableInspector : Editor
 
     private void DrawMainContent()
     {
-        var indices = GetIndices();
-
         GUILayout.BeginVertical("box");
         {
-            mainFoldout = EditorGUILayout.Foldout(mainFoldout, $"📋 Items ({indices.Count}/{GetItemCount()})");
+            mainFoldout = EditorGUILayout.Foldout(mainFoldout, $"📋 Items ({GetItemCount()})");
 
             if (mainFoldout)
             {
-                if (indices.Count == 0)
+                int index = 0;
+                foreach (var item in GetAllItems())
                 {
-                    EditorGUILayout.HelpBox("No items match the current filter.", MessageType.Info);
-                }
-                else
-                {
-                    foreach (int index in indices)
-                    {
-                        DrawItemElement(index);
-                    }
+                    DrawItemElement(item as BaseTableData, index++);
                 }
 
                 EditorGUILayout.Space(5);
@@ -134,16 +161,11 @@ public class BaseTableInspector : Editor
         GUILayout.EndVertical();
     }
 
-    private void DrawItemElement(int index)
+    private void DrawItemElement(BaseTableData data, int index)
     {
-        var items = GetAllItems();
-        if (items == null || index >= items.Count) return;
-
-        var item = items[index] as BaseTableData;
-
         // 색상 설정
         Color originalColor = GUI.backgroundColor;
-        if (item == null)
+        if (data == null)
             GUI.backgroundColor = Color.yellow;
 
         GUILayout.BeginVertical("window");
@@ -153,9 +175,9 @@ public class BaseTableInspector : Editor
             GUILayout.BeginHorizontal();
             {
                 // 폴드아웃과 아이템 정보
-                string itemName = GetItemDisplayName(item);
-                string itemId = item != null ? $"[ID: {item.ID}]" : "[No ID]";
-                string statusIcon = GetStatusIcon(item);
+                string itemName = GetItemDisplayName(data);
+                string itemId = data != null ? $"[ID: {data.ID}]" : "[No ID]";
+                string statusIcon = GetStatusIcon(data);
 
                 itemFoldouts[index] = EditorGUILayout.Foldout(
                     itemFoldouts[index],
@@ -181,19 +203,15 @@ public class BaseTableInspector : Editor
             // 아이템 세부 정보
             if (itemFoldouts[index])
             {
-                DrawItemDetails(index);
+                DrawItemDetails(data, index);
             }
         }
         GUILayout.EndVertical();
     }
 
-    private void DrawItemDetails(int index)
+    private void DrawItemDetails(BaseTableData data, int index)
     {
-        var items = GetAllItems();
-        if (items == null || index >= items.Count) return;
-
-        var item = items[index] as BaseTableData;
-        if (item == null)
+        if (data == null)
         {
             EditorGUILayout.HelpBox("Data is null. Delete this entry.", MessageType.Warning);
             return;
@@ -205,16 +223,30 @@ public class BaseTableInspector : Editor
         bool enterChildren = true;
         bool modifyData = false;
 
+        // 데이터 활성화 유무
         GUILayout.BeginHorizontal();
         {
-            uint newId = (uint)EditorGUILayout.IntField("ID", (int)item.ID);
+            EditorGUILayout.LabelField("Active");
+            bool isActive = EditorGUILayout.Toggle(data.IsActive);
 
-            if (newId != item.ID && newId != 0)
+            if (isActive != data.IsActive)
             {
-                Undo.RecordObject(item, "Change Data ID");
-                SetItemID(item, newId);
+                SetItemActive(data, isActive);
                 modifyData = true;
-                EditorUtility.SetDirty(item);
+            }
+        }
+        GUILayout.EndHorizontal();
+
+        // ID 필드
+        GUILayout.BeginHorizontal();
+        {
+            uint newId = (uint)EditorGUILayout.IntField("ID", (int)data.ID);
+
+            if (newId != data.ID && newId != 0)
+            {
+                Undo.RecordObject(data, "Change Data ID");
+                SetItemID(data, newId);
+                modifyData = true;
             }
         }
         GUILayout.EndHorizontal();
@@ -222,10 +254,21 @@ public class BaseTableInspector : Editor
 
         EditorGUILayout.Space(5);
 
+        // 썸네일 필드
+        Texture2D texture = (Texture2D)EditorGUILayout.ObjectField("Thumbnail", viewTextures[index], typeof(Texture2D), false);
+        if (texture != viewTextures[index])
+        {
+            SetThumbnail(data, texture);
+            viewTextures[index] = texture;
+            modifyData = true;
+        }
+
+        EditorGUILayout.Space(5);
+
         // 나머지 필드들은 기본 PropertyField로 표시
         EditorGUILayout.LabelField("Data Properties", EditorStyles.boldLabel);
 
-        var serializedItem = new SerializedObject(item);
+        var serializedItem = new SerializedObject(data);
         var iterator = serializedItem.GetIterator();
 
         while (iterator.NextVisible(enterChildren))
@@ -233,7 +276,10 @@ public class BaseTableInspector : Editor
             enterChildren = false;
 
             // ID 필드는 이미 위에서 처리했으므로 스킵
-            if (iterator.name == "_id" || iterator.name == "m_Script")
+            if (iterator.name == "_id"
+            || iterator.name == "m_Script"
+            || iterator.name == "_thumbnail"
+            || iterator.name == "_isActive")
                 continue;
 
             EditorGUI.BeginChangeCheck();
@@ -249,7 +295,7 @@ public class BaseTableInspector : Editor
         serializedItem.ApplyModifiedProperties();
 
         if (modifyData)
-            SetItemName(item);
+            SetItemName(data);
 
         EditorGUI.indentLevel--;
     }
@@ -271,23 +317,8 @@ public class BaseTableInspector : Editor
 
     private string GetStatusIcon(BaseTableData item)
     {
-        if (item == null) return "❌";
+        if (item == null || !item.IsActive) return "❌";
         return "✅";
-    }
-
-    private List<int> GetIndices()
-    {
-        var items = GetAllItems();
-        if (items == null) return new List<int>();
-
-        var indices = new List<int>();
-
-        for (int i = 0; i < items.Count; i++)
-        {
-            indices.Add(i);
-        }
-
-        return indices;
     }
 
     private void CreateNewItem()
@@ -313,6 +344,7 @@ public class BaseTableInspector : Editor
         items?.Add(newItem);
 
         RefreshItemFoldouts();
+        RefreshViewTextures();
 
         EditorUtility.SetDirty(baseTable);
         EditorUtility.SetDirty(newItem);
@@ -352,9 +384,18 @@ public class BaseTableInspector : Editor
 
         items.RemoveAt(index);
         RefreshItemFoldouts();
+        RefreshViewTextures();
 
         EditorUtility.SetDirty(baseTable);
         AssetDatabase.SaveAssets();
+    }
+
+    private void SetItemActive(BaseTableData item, bool isActive)
+    {
+        // BaseTableData의 protected id 필드를 리플렉션으로 설정
+        var field = typeof(BaseTableData).GetField("_isActive",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        field?.SetValue(item, isActive);
     }
 
     private void SetItemID(BaseTableData item, uint newId)
@@ -363,5 +404,19 @@ public class BaseTableInspector : Editor
         var field = typeof(BaseTableData).GetField("_id",
             BindingFlags.NonPublic | BindingFlags.Instance);
         field?.SetValue(item, newId);
+    }
+
+    private void SetThumbnail(BaseTableData item, Texture2D texture)
+    {
+        // BaseTableData의 protected id 필드를 리플렉션으로 설정
+        var field = typeof(BaseTableData).GetField("_thumbnail",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+
+        var path = AssetDatabase.GetAssetPath(texture);
+
+        if (!string.IsNullOrEmpty(path))
+            path = path.Replace("Assets/Game/Resources/", "").Replace(".png", "");
+
+        field?.SetValue(item, path);
     }
 }

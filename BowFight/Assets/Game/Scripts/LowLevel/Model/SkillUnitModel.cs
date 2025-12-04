@@ -17,12 +17,13 @@ public struct SkillUnitModel : IUnitModel
     {
         DataID = data.ID;
         CoolTime = data.CoolTime;
-        IsCoolTime = false;
-        ThumbnailPath = data.ThumbnailPath;
+        IsCoolTime = CoolTime > 0;
+        ThumbnailPath = data.Thumbnail;
 
         _elapsedTime = 0f;
         _skillIndex = index;
         _onEventUseSkill = onEventUseSkill;
+
     }
 
     public void PassTime(float time)

@@ -1,5 +1,32 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-7680696070811028719
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 371705ece2f2f4243a833a0b72097981, type: 3}
+  m_Name: 005_DashShot
+  m_EditorClassIdentifier: 
+  _isActive: 0
+  _id: 5
+  _name: DashShot
+  _thumbnail: Sprites/SkillIcons/skill_216
+  _damageRate: 0.8
+  _durationDamageRate: 0.1
+  _arrowMoveSpeed: 1
+  _duration: 0
+  _coolTime: 3
+  _spawnCount: 1
+  _spawnRadius: 0
+  _moveType: 2
+  _effectType: 0
+  _targetType: 0
+  _arrowMoveType: 1
 --- !u!114 &-5204119470801265356
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12,12 +39,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 371705ece2f2f4243a833a0b72097981, type: 3}
   m_Name: 001_JumpShot
   m_EditorClassIdentifier: 
+  _isActive: 0
   _id: 1
   _name: JumpShot
-  _thumbnailPath: Sprites/SkillIcons/skill_023
-  _coolTime: 5
-  _isDirect: 0
-  _isJump: 1
+  _thumbnail: Sprites/SkillIcons/skill_024
+  _damageRate: 1
+  _durationDamageRate: 0.1
+  _arrowMoveSpeed: 1
+  _duration: 0
+  _coolTime: 3
+  _spawnCount: 1
+  _spawnRadius: 0
+  _moveType: 1
+  _effectType: 0
+  _targetType: 0
+  _arrowMoveType: 0
 --- !u!114 &-1179638294223704163
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -30,12 +66,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 371705ece2f2f4243a833a0b72097981, type: 3}
   m_Name: 003_DirectJumpShot
   m_EditorClassIdentifier: 
+  _isActive: 0
   _id: 3
   _name: DirectJumpShot
-  _thumbnailPath: Sprites/SkillIcons/skill_024
+  _thumbnail: Sprites/SkillIcons/skill_103
+  _damageRate: 1
+  _durationDamageRate: 0.1
+  _arrowMoveSpeed: 1
+  _duration: 0
   _coolTime: 8
-  _isDirect: 1
-  _isJump: 1
+  _spawnCount: 1
+  _spawnRadius: 0
+  _moveType: 1
+  _effectType: 0
+  _targetType: 0
+  _arrowMoveType: 1
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -52,6 +97,40 @@ MonoBehaviour:
   - {fileID: -5204119470801265356}
   - {fileID: 576545588559030738}
   - {fileID: -1179638294223704163}
+  - {fileID: 207686492604405101}
+  - {fileID: -7680696070811028719}
+  - {fileID: 1464927121176616464}
+  - {fileID: 2729712527215266759}
+  - {fileID: 4504678996073883518}
+  - {fileID: 3623225284825348363}
+  - {fileID: 6367964353617522555}
+--- !u!114 &207686492604405101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 371705ece2f2f4243a833a0b72097981, type: 3}
+  m_Name: 004_HighShot
+  m_EditorClassIdentifier: 
+  _isActive: 0
+  _id: 4
+  _name: HighShot
+  _thumbnail: Sprites/SkillIcons/skill_214
+  _damageRate: 1.2
+  _durationDamageRate: 0.1
+  _arrowMoveSpeed: 1
+  _duration: 0
+  _coolTime: 12
+  _spawnCount: 3
+  _spawnRadius: 1
+  _moveType: 0
+  _effectType: 0
+  _targetType: 0
+  _arrowMoveType: 2
 --- !u!114 &576545588559030738
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -64,9 +143,153 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 371705ece2f2f4243a833a0b72097981, type: 3}
   m_Name: 002_DirectShot
   m_EditorClassIdentifier: 
+  _isActive: 0
   _id: 2
   _name: DirectShot
-  _thumbnailPath: Sprites/SkillIcons/skill_028
-  _coolTime: 7
-  _isDirect: 1
-  _isJump: 0
+  _thumbnail: Sprites/SkillIcons/skill_090
+  _damageRate: 1
+  _durationDamageRate: 0.1
+  _arrowMoveSpeed: 1
+  _duration: 0
+  _coolTime: 5
+  _spawnCount: 1
+  _spawnRadius: 0
+  _moveType: 0
+  _effectType: 0
+  _targetType: 0
+  _arrowMoveType: 1
+--- !u!114 &1464927121176616464
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 371705ece2f2f4243a833a0b72097981, type: 3}
+  m_Name: 006_FireShot
+  m_EditorClassIdentifier: 
+  _isActive: 0
+  _id: 6
+  _name: FireShot
+  _thumbnail: Sprites/SkillIcons/skill_034
+  _damageRate: 1
+  _durationDamageRate: 0.1
+  _arrowMoveSpeed: 1
+  _duration: 5
+  _coolTime: 3
+  _spawnCount: 1
+  _spawnRadius: 0
+  _moveType: 0
+  _effectType: 1
+  _targetType: 0
+  _arrowMoveType: 0
+--- !u!114 &2729712527215266759
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 371705ece2f2f4243a833a0b72097981, type: 3}
+  m_Name: 007_PositionShot
+  m_EditorClassIdentifier: 
+  _isActive: 1
+  _id: 7
+  _name: PositionShot
+  _thumbnail: Sprites/SkillIcons/skill_029
+  _damageRate: 1
+  _durationDamageRate: 0.1
+  _arrowMoveSpeed: 1
+  _duration: 5
+  _coolTime: 3
+  _spawnCount: 1
+  _spawnRadius: 0
+  _moveType: 0
+  _effectType: 2
+  _targetType: 0
+  _arrowMoveType: 0
+--- !u!114 &3623225284825348363
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 371705ece2f2f4243a833a0b72097981, type: 3}
+  m_Name: 009_LightningShot
+  m_EditorClassIdentifier: 
+  _isActive: 0
+  _id: 9
+  _name: LightningShot
+  _thumbnail: Sprites/SkillIcons/skill_078
+  _damageRate: 1
+  _durationDamageRate: 0.1
+  _arrowMoveSpeed: 2
+  _duration: 2
+  _coolTime: 3
+  _spawnCount: 3
+  _spawnRadius: 3
+  _moveType: 0
+  _effectType: 4
+  _targetType: 0
+  _arrowMoveType: 2
+--- !u!114 &4504678996073883518
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 371705ece2f2f4243a833a0b72097981, type: 3}
+  m_Name: 008_IceShot
+  m_EditorClassIdentifier: 
+  _isActive: 0
+  _id: 8
+  _name: IceShot
+  _thumbnail: Sprites/SkillIcons/skill_056
+  _damageRate: 1
+  _durationDamageRate: 0.1
+  _arrowMoveSpeed: 1
+  _duration: 3
+  _coolTime: 3
+  _spawnCount: 1
+  _spawnRadius: 0
+  _moveType: 0
+  _effectType: 3
+  _targetType: 0
+  _arrowMoveType: 0
+--- !u!114 &6367964353617522555
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 371705ece2f2f4243a833a0b72097981, type: 3}
+  m_Name: 010_DarkShot
+  m_EditorClassIdentifier: 
+  _isActive: 0
+  _id: 10
+  _name: DarkShot
+  _thumbnail: Sprites/SkillIcons/skill_155
+  _damageRate: 1
+  _durationDamageRate: 0.1
+  _arrowMoveSpeed: 0.75
+  _duration: 5
+  _coolTime: 3
+  _spawnCount: 1
+  _spawnRadius: 0
+  _moveType: 0
+  _effectType: 5
+  _targetType: 0
+  _arrowMoveType: 1

@@ -151,11 +151,12 @@ public class ArcherAnimation : MonoBehaviour
 
             _nockPoint.position = Vector3.Lerp(_nockPoint.position, _bowstringAnchorPoint.position, t);
 
-            if (await UniTask.NextFrame(cancellationToken: _bowAnimation.Token).SuppressCancellationThrow())
+            if (_bowAnimation == null
+            || await UniTask.NextFrame(cancellationToken: _bowAnimation.Token).SuppressCancellationThrow())
                 break;
         }
 
-        _bowAnimation.Dispose();
+        _bowAnimation?.Dispose();
         _bowAnimation = null;
     }
 
@@ -194,11 +195,12 @@ public class ArcherAnimation : MonoBehaviour
 
             _nockPoint.localPosition = Vector3.LerpUnclamped(originNockLocalPos, _nockLocalPos, _bowReleaseCurve.Evaluate(t));
 
-            if (await UniTask.NextFrame(cancellationToken: _bowAnimation.Token).SuppressCancellationThrow())
+            if (_bowAnimation == null
+                || await UniTask.NextFrame(cancellationToken: _bowAnimation.Token).SuppressCancellationThrow())
                 break;
         }
 
-        _bowAnimation.Dispose();
+        _bowAnimation?.Dispose();
         _bowAnimation = null;
 
         BowState = BowLoadState.None;

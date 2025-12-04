@@ -49,8 +49,11 @@ MonoBehaviour:
   _archerAnimation: {fileID: 4623797520227728922}
   _rigidbody: {fileID: 4739026633306135828}
   _targetCollider: {fileID: 8156061098629501966}
+  _hp: 100
   _moveSpeed: 2
-  _decelerationSpeed: 2
+  _dashSpeed: 5
+  _decelerationSpeed: 5
+  _attackDamage: 10
   _isFlip: 0
 --- !u!70 &8156061098629501966
 CapsuleCollider2D:

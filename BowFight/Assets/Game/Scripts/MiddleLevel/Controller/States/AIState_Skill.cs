@@ -12,6 +12,7 @@ public class AIState_Skill : AIState
     private float[] _useSkillTimes;
 
     private System.Func<int, bool> _onEventUseSkill = null;
+    private System.Func<bool> _onEventHasLoadSkill = null;
 
     public AIState_Skill(AIController controller) : base(controller)
     {
@@ -21,6 +22,9 @@ public class AIState_Skill : AIState
     {
         _useSkillIndex = -1;
         _skillExecuted = false;
+
+        if (_onEventHasLoadSkill == null)
+            Debug.LogError("AI 스킬 종료 이벤트가 등록되어 있지 않습니다.");
     }
 
     public override void OnUpdate()
@@ -43,10 +47,16 @@ public class AIState_Skill : AIState
         if (_skillExecuted)
         {
             if (_useSkillIndex >= 0)
+            {
                 ExecuteSkill(_useSkillIndex);
+                _useSkillIndex = -1;
+            }
+
+            if (_onEventHasLoadSkill != null & !_onEventHasLoadSkill())
+                return _controller.GetState<AIState_Move>();
         }
 
-        return _controller.GetState<AIState_Move>();
+        return null;
     }
 
     public void SetSkillData(SkillTableData[] skillDatas)
@@ -67,6 +77,7 @@ public class AIState_Skill : AIState
             else
             {
                 _coolTimes[i] = skillData.CoolTime;
+                _useSkillTimes[i] = Time.realtimeSinceStartup;
             }
         }
     }
@@ -74,6 +85,11 @@ public class AIState_Skill : AIState
     public void SetEventUseSkill(System.Func<int, bool> onEvent)
     {
         _onEventUseSkill = onEvent;
+    }
+
+    public void SetEventHasLoadSkill(System.Func<bool> onEvent)
+    {
+        _onEventHasLoadSkill = onEvent;
     }
 
     private void ExecuteSkill(int index)

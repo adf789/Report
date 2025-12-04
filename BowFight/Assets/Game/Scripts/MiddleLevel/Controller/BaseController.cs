@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class BaseController : MonoBehaviour
@@ -20,6 +18,7 @@ public class BaseController : MonoBehaviour
     private float _accelation = 0f;
     private float _prevVelocityY = 0f;
     private float _useSkillTime = 0f;
+    private float _remainDashTime = 0f;
     private bool _isJumping = false;
 
     private readonly int ATTACK_FIRST_DELAY = 2;
@@ -30,6 +29,8 @@ public class BaseController : MonoBehaviour
     {
         _shootTime = Time.realtimeSinceStartup + ATTACK_FIRST_DELAY;
         _skillDatas = skillDatas;
+
+        _archer.Initialize();
     }
 
     public void SetMoveLimit(float minX, float maxX)
@@ -56,6 +57,13 @@ public class BaseController : MonoBehaviour
 
         _rigidBody.AddForceY(_jumpForce);
         _archer.Jump();
+    }
+
+    protected void Dash()
+    {
+        _remainDashTime = 0.5f;
+
+        _archer.Move(MoveState.ForwardDash);
     }
 
     protected virtual void ShootArrow()
@@ -89,9 +97,13 @@ public class BaseController : MonoBehaviour
 
         // 점프 후 발사하는 경우
         // 최고점에 도달 후 발사하도록 지연 발사를 적용
-        if (skillData.IsJump)
+        if (skillData.MoveType == SkillMoveType.Jump)
         {
             Jump();
+        }
+        else if (skillData.MoveType == SkillMoveType.Dash)
+        {
+            Dash();
         }
         else
         {
@@ -117,9 +129,47 @@ public class BaseController : MonoBehaviour
 
     protected void OnUpdateMove()
     {
-        OnUpdateSideMove();
+        if (!OnUpdateDash())
+            OnUpdateSideMove();
 
         OnCheckSkillCondition();
+    }
+
+    private bool OnUpdateDash()
+    {
+        if (_remainDashTime <= float.Epsilon)
+            return false;
+
+        var bounds = _collider.bounds;
+        float halfSize = bounds.size.x * 0.5f;
+
+        // 방향 전환 유무
+        int flip = _archer.IsFlip ? -1 : 1;
+
+        // 가속력 변화
+        _accelation = Mathf.MoveTowards(_accelation, _archer.MoveSpeed * _archer.DashSpeed, _archer.MoveSpeed * _archer.DashSpeed * Time.fixedDeltaTime * ACCELATION_WEIGHT);
+
+        // 앞쪽 범위 초과 체크
+        if (!_archer.IsFlip && transform.position.x + halfSize >= _maxX)
+        {
+            OnAfterDash();
+            return true;
+        }
+        else if (_archer.IsFlip && transform.position.x - halfSize <= _minX)
+        {
+            OnAfterDash();
+            return true;
+        }
+
+        // 앞쪽으로 이동
+        transform.Translate(-Vector3.left * flip * _accelation * Time.fixedDeltaTime);
+
+        _remainDashTime = Mathf.Max(0, _remainDashTime - Time.fixedDeltaTime);
+
+        if (_remainDashTime <= float.Epsilon)
+            OnAfterDash();
+
+        return true;
     }
 
     private void OnUpdateSideMove()
@@ -138,26 +188,33 @@ public class BaseController : MonoBehaviour
         var bounds = _collider.bounds;
         float halfSize = bounds.size.x * 0.5f;
 
+        // 방향 전환 유무
+        int flip = _archer.IsFlip ? -1 : 1;
+
         // 가속력 변화
-        _accelation = Mathf.MoveTowards(_accelation, _archer.MoveSpeed, _archer.MoveSpeed * Time.deltaTime * ACCELATION_WEIGHT);
+        _accelation = Mathf.MoveTowards(_accelation, _archer.MoveSpeed, _archer.MoveSpeed * Time.fixedDeltaTime * ACCELATION_WEIGHT);
 
-        if (_archer.MoveState == MoveState.LeftMove)
+        if (_archer.MoveState == MoveState.BackwardMove)
         {
-            // 왼쪽 범위 초과 체크
-            if (transform.position.x - halfSize <= _minX)
+            // 뒤쪽 범위 초과 체크
+            if (!_archer.IsFlip && transform.position.x - halfSize <= _minX)
+                return;
+            else if (_archer.IsFlip && transform.position.x + halfSize >= _maxX)
                 return;
 
-            // 왼쪽으로 이동
-            transform.Translate(Vector3.left * _accelation * Time.deltaTime);
+            // 뒤쪽으로 이동
+            transform.Translate(Vector3.left * flip * _accelation * Time.fixedDeltaTime);
         }
-        else if (_archer.MoveState == MoveState.RightMove)
+        else if (_archer.MoveState == MoveState.ForwardMove)
         {
-            // 오른쪽 범위 초과 체크
-            if (transform.position.x + halfSize >= _maxX)
+            // 앞쪽 범위 초과 체크
+            if (!_archer.IsFlip && transform.position.x + halfSize >= _maxX)
+                return;
+            else if (_archer.IsFlip && transform.position.x - halfSize <= _minX)
                 return;
 
-            // 오른쪽으로 이동
-            transform.Translate(-Vector3.left * _accelation * Time.deltaTime);
+            // 앞쪽으로 이동
+            transform.Translate(-Vector3.left * flip * _accelation * Time.fixedDeltaTime);
         }
     }
 
@@ -171,6 +228,14 @@ public class BaseController : MonoBehaviour
 
     private void OnAfterJump()
     {
+        _archer.SkillShoot();
+    }
+
+    private void OnAfterDash()
+    {
+        _remainDashTime = 0;
+
+        _archer.Move(MoveState.None);
         _archer.SkillShoot();
     }
 

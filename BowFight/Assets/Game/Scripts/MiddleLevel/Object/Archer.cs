@@ -5,10 +5,14 @@ using UnityEngine;
 public class Archer : MonoBehaviour, ITarget
 {
     public MoveState MoveState => _moveState;
+    public CrowdControlState CrowdControlState => _crowdControlState;
     public BowLoadState BowLoadState => _archerAnimation.BowState;
     public float MoveSpeed => _moveSpeed;
-    public float DecelerationSpeed => _decelerationSpeed;
+    public float DashSpeed => _dashSpeed;
+    public float MaxHP => _hp;
+    public float CurrentHP => _currentHp;
     public bool IsFlip => _isFlip;
+    public int LoadSkillCount => _loadSkills != null ? _loadSkills.Count : 0;
     public int InstanceID => gameObject.GetInstanceID();
 
     [Header("References")]
@@ -18,26 +22,59 @@ public class Archer : MonoBehaviour, ITarget
     [SerializeField] private Collider2D _targetCollider;
 
     [Header("Values")]
+    [SerializeField] private float _hp = 100f;
     [SerializeField] private float _moveSpeed = 5f;
+    [SerializeField] private float _dashSpeed = 5f;
     [SerializeField] private float _decelerationSpeed = 5f;
+    [SerializeField] private float _attackDamage = 10f;
     [SerializeField] private bool _isFlip = false;
 
     private MoveState _moveState;
+    private CrowdControlState _crowdControlState;
     private float _moveDirection;
+    private float _currentHp;
+    private float _updateBuffTime;
 
     private ITarget _target;
     private ArrowObjectPool _arrowPool = null;
     private Queue<SkillTableData> _loadSkills = null;
+    private Queue<IBuffData> _affectedBuffs = null;
+
+    private Action _onEventUpdateBuffUI = null;
+    private Action _onEventUpdateHp = null;
+    private Action<bool> _onEventBlind = null;
+    private Action<Vector2, int> _onEventShowDamage = null;
+
+    private readonly float UPDATE_BUFF_TIME = 0.1f;
 
     void Awake()
     {
         _archerAnimation.SetEventCreateArrow(FireArrow);
         _loadSkills = new Queue<SkillTableData>();
+        _affectedBuffs = new Queue<IBuffData>();
     }
 
     void Update()
     {
         OnUpdateMove();
+
+        OnUpdateBuff();
+    }
+
+    public void Initialize()
+    {
+        _currentHp = _hp;
+    }
+
+    public void SetEvents(Action onEventUpdateBuffUI,
+    Action onEventUpdateHp,
+    Action<bool> onEventBlind,
+    Action<Vector2, int> onEventShowDamage)
+    {
+        _onEventUpdateBuffUI = onEventUpdateBuffUI;
+        _onEventUpdateHp = onEventUpdateHp;
+        _onEventBlind = onEventBlind;
+        _onEventShowDamage = onEventShowDamage;
     }
 
     public void Shoot()
@@ -62,6 +99,22 @@ public class Archer : MonoBehaviour, ITarget
     public void Move(MoveState state)
     {
         _moveState = state;
+
+        if (_crowdControlState.HasFlag(CrowdControlState.Freeze)
+        || _crowdControlState.HasFlag(CrowdControlState.Shock))
+            _moveState = MoveState.None;
+    }
+
+    private void AddCrowdControl(CrowdControlState state)
+    {
+        _crowdControlState |= state;
+
+        Move(MoveState.None);
+    }
+
+    private void RemoveCrowdControl(CrowdControlState state)
+    {
+        _crowdControlState &= ~state;
     }
 
     public void Jump()
@@ -84,9 +137,14 @@ public class Archer : MonoBehaviour, ITarget
         _target = target;
     }
 
-    public void OnDamaged(Arrow arrow)
+    private void AddHp(float value)
     {
-        Debug.Log("Damaged!");
+        if (value == 0)
+            return;
+
+        _currentHp += value;
+
+        _onEventUpdateHp?.Invoke();
     }
 
     public Vector3 GetPosition()
@@ -94,22 +152,61 @@ public class Archer : MonoBehaviour, ITarget
         return _targetCollider ? _targetCollider.bounds.center : transform.position;
     }
 
+    public IEnumerable<IBuffData> GetAffectedBuffs()
+    {
+        foreach (var buff in _affectedBuffs)
+        {
+            yield return buff;
+        }
+    }
+
+    public void OnDamaged(Arrow arrow)
+    {
+        // 데미지 적용
+        AddHp(-arrow.Damage);
+        var position = ConvertToScreenPosition(arrow.transform.position);
+        _onEventShowDamage?.Invoke(position, (int)arrow.Damage);
+
+        // 버프 적용
+        if (arrow.SkillData != null
+        && arrow.SkillData.Duration > 0)
+        {
+            // 이미 적용된 버프인지 확인
+            if (!CheckAlreadyAffectedBuff(arrow.SkillData.ID))
+            {
+                var newBuff = GetBuffData(arrow.SkillData);
+
+                if (newBuff != null)
+                {
+                    OnBuff(newBuff, 0);
+
+                    _affectedBuffs.Enqueue(newBuff);
+                }
+
+                _onEventUpdateBuffUI?.Invoke();
+            }
+        }
+    }
+
     private void OnUpdateMove()
     {
-        // 방향 전환 유무
-        int flip = _isFlip ? -1 : 1;
-
         switch (_moveState)
         {
-            case MoveState.LeftMove:
+            case MoveState.BackwardMove:
                 {
-                    _moveDirection = Mathf.MoveTowards(_moveDirection, -1f * flip, _moveSpeed * Time.deltaTime);
+                    _moveDirection = Mathf.MoveTowards(_moveDirection, -1f, _moveSpeed * Time.deltaTime);
                 }
                 break;
 
-            case MoveState.RightMove:
+            case MoveState.ForwardMove:
                 {
-                    _moveDirection = Mathf.MoveTowards(_moveDirection, 1f * flip, _moveSpeed * Time.deltaTime);
+                    _moveDirection = Mathf.MoveTowards(_moveDirection, 1f, _moveSpeed * Time.deltaTime);
+                }
+                break;
+
+            case MoveState.ForwardDash:
+                {
+                    _moveDirection = Mathf.MoveTowards(_moveDirection, 2f, _moveSpeed * _dashSpeed * Time.deltaTime);
                 }
                 break;
 
@@ -121,6 +218,92 @@ public class Archer : MonoBehaviour, ITarget
         }
 
         _animator.SetFloat("MoveDirection", _moveDirection);
+    }
+
+    private void OnUpdateBuff()
+    {
+        int buffCount = _affectedBuffs.Count;
+        float currentTime = Time.time;
+
+        if (buffCount == 0)
+            return;
+
+        if (_updateBuffTime + UPDATE_BUFF_TIME > currentTime)
+            return;
+
+        _updateBuffTime = currentTime;
+
+        for (int i = 0; i < buffCount; i++)
+        {
+            var buff = _affectedBuffs.Dequeue();
+            int appliedValueCount = buff.UpdateTime(currentTime);
+
+            OnBuff(buff, appliedValueCount);
+
+            if (buff.RemainTime > float.Epsilon)
+                _affectedBuffs.Enqueue(buff);
+        }
+
+        // 버프 수가 변경된 경우
+        if (buffCount != _affectedBuffs.Count)
+        {
+            _onEventUpdateBuffUI?.Invoke();
+        }
+    }
+
+    private void OnBuff(IBuffData buff, int count)
+    {
+        if (buff == null)
+            return;
+
+        float affectValue = buff.AddValue * count;
+        bool isEndTime = buff.RemainTime <= float.Epsilon;
+
+        switch (buff.Type)
+        {
+            case BuffType.Burning:
+            case BuffType.Poison:
+                {
+                    AddHp(-affectValue);
+
+                    var position = ConvertToScreenPosition(GetRandomPosition());
+                    _onEventShowDamage?.Invoke(position, (int)affectValue);
+                }
+                break;
+
+            case BuffType.Freeze:
+                {
+                    if (isEndTime)
+                        RemoveCrowdControl(CrowdControlState.Freeze);
+                    else
+                        AddCrowdControl(CrowdControlState.Freeze);
+                }
+                break;
+
+            case BuffType.Shock:
+                {
+                    if (isEndTime)
+                        RemoveCrowdControl(CrowdControlState.Shock);
+                    else
+                        AddCrowdControl(CrowdControlState.Shock);
+                }
+                break;
+
+            case BuffType.Blind:
+                {
+                    _onEventBlind?.Invoke(!isEndTime);
+                }
+                break;
+
+            case BuffType.Heal:
+                {
+                    AddHp(affectValue);
+
+                    var position = ConvertToScreenPosition(GetRandomPosition());
+                    _onEventShowDamage?.Invoke(position, (int)affectValue);
+                }
+                break;
+        }
     }
 
     private void ArrowReturnToPool(Arrow arrow)
@@ -146,26 +329,87 @@ public class Archer : MonoBehaviour, ITarget
 
         arrow.SetEventReturnToPool(ArrowReturnToPool);
         arrow.SetPosition(position);
-        arrow.SetTarget(_target);
 
         return arrow;
     }
 
+    private IBuffData GetBuffData(SkillTableData skillData)
+    {
+        if (skillData == null)
+            return null;
+
+        switch (skillData.EffectType)
+        {
+            case SkillEffectType.Fire:
+                return new BurningDebuffData(skillData, _attackDamage, Time.time);
+
+            case SkillEffectType.Poison:
+                return new PoisonDebuffData(skillData, _attackDamage, Time.time);
+
+            case SkillEffectType.Ice:
+                return new FreezeDebuffData(skillData, _attackDamage, Time.time);
+
+            case SkillEffectType.Lightning:
+                return new ShockDebuffData(skillData, _attackDamage, Time.time);
+
+            case SkillEffectType.Dark:
+                return new BlindDebuffData(skillData, _attackDamage, Time.time);
+
+            case SkillEffectType.Heal:
+                return new HealBuffData(skillData, _attackDamage, Time.time);
+
+            default:
+                return null;
+        }
+    }
+
+    private Vector2 ConvertToScreenPosition(Vector3 position)
+    {
+        return Camera.main.WorldToScreenPoint(position);
+    }
+
+    private Vector3 GetRandomPosition()
+    {
+        var bounds = _targetCollider.bounds;
+
+        float x = UnityEngine.Random.Range(bounds.min.x, bounds.max.x);
+        float y = UnityEngine.Random.Range(bounds.min.y, bounds.max.y);
+
+        return new Vector3(x, y, 0);
+    }
+
     private void FireArrow(Vector3 position)
     {
-        var arrow = GetArrow(position);
-
-        ArrowMoveType moveType = ArrowMoveType.Parabola;
-
         if (_loadSkills.Count > 0)
         {
             var skillData = _loadSkills.Dequeue();
 
-            if (skillData.IsDirect)
-                moveType = ArrowMoveType.Direct;
-        }
+            for (int i = 0; i < skillData.SpawnCount; i++)
+            {
+                float damage = _attackDamage * skillData.DamageRate / skillData.SpawnCount;
 
-        arrow?.StartMove(moveType);
+                Vector2 randomCircle = UnityEngine.Random.insideUnitCircle * skillData.SpawnRadius;
+                Vector3 newPosition = position + (Vector3)randomCircle;
+
+                StartArrowMove(skillData, newPosition, damage);
+            }
+        }
+        else
+        {
+            StartArrowMove(SkillTableData.Default(), position, _attackDamage);
+        }
+    }
+
+    private void StartArrowMove(SkillTableData skillData, Vector3 position, float damage)
+    {
+        var arrow = GetArrow(position);
+
+        if (arrow == null)
+            return;
+
+        arrow.SetTarget(skillData.TargetType == SkillTargetType.Self ? this : _target);
+        arrow.SetDamage(damage);
+        arrow.StartMove(skillData);
     }
 
     private void ReloadSkillArrow(SkillTableData skillData)
@@ -179,5 +423,18 @@ public class Archer : MonoBehaviour, ITarget
         {
             _archerAnimation.CancelBowAnimation();
         }
+    }
+
+    private bool CheckAlreadyAffectedBuff(uint id)
+    {
+        foreach (var buff in _affectedBuffs)
+        {
+            if (buff.ID == id)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

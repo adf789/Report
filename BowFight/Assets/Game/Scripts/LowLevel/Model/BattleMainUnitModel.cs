@@ -3,10 +3,12 @@ using UnityEngine;
 
 public class BattleMainUnitModel : IUnitModel
 {
+    public int SkillCount => _skillUnitModel != null ? _skillUnitModel.Length : 0;
     public Action OnEventRightMove { get; private set; }
     public Action OnEventLeftMove { get; private set; }
     public Action OnEventMoveStop { get; private set; }
-    public int SkillCount => _skillUnitModel != null ? _skillUnitModel.Length : 0;
+    public StateBarUnitModel PlayerStateBarModel { get; private set; } = new StateBarUnitModel();
+    public StateBarUnitModel AIPlayerStateBarModel { get; private set; } = new StateBarUnitModel();
 
     private SkillUnitModel[] _skillUnitModel = null;
 

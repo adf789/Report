@@ -24,6 +24,8 @@ public class AIController : BaseController
     private void FixedUpdate()
     {
         _stateMachine?.FixedUpdate();
+
+        OnUpdateMove();
     }
 
     /// <summary>
@@ -63,13 +65,14 @@ public class AIController : BaseController
         {
             case AIState_Move moveState:
                 {
-                    moveState.SetEventMoveUpdate(OnUpdateMove);
+                    moveState.SetEventMove(SetMove);
                 }
                 break;
 
             case AIState_Skill skillState:
                 {
                     skillState.SetEventUseSkill(ShootSkillArrow);
+                    skillState.SetEventHasLoadSkill(CheckHasLoadSkill);
                     skillState.SetSkillData(_skillDatas);
                 }
                 break;
@@ -111,15 +114,16 @@ public class AIController : BaseController
         }
     }
 
-    #region State Helper Methods (상태들이 사용할 유틸리티 메서드)
-
-    /// <summary>
-    /// Archer에게 이동 명령
-    /// </summary>
-    public void MoveArcher(MoveState direction)
+    private void SetMove(MoveState direction)
     {
         _archer?.Move(direction);
     }
 
-    #endregion
+    private bool CheckHasLoadSkill()
+    {
+        if (_archer == null)
+            return false;
+
+        return _archer.LoadSkillCount > 0;
+    }
 }

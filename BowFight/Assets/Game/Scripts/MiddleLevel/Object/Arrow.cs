@@ -2,18 +2,29 @@ using UnityEngine;
 
 public class Arrow : MonoBehaviour, IReusable
 {
+    public ArrowMoveType MoveType => GetSkillData().ArrowMoveType;
+    public SkillTableData SkillData => _skillData;
+    public float TravelTime => _travelTime / GetSkillData().ArrowMoveSpeed;
+    public float Damage => _damage;
+
+    [Header("References")]
+    [SerializeField] private TrailRenderer _trailRenderer;
+
     [Header("Common Move Setting")]
+    [Range(0.5f, 2f)]
     [SerializeField] private float _travelTime = 1f;
 
     [Header("Parabola Move Setting")]
     [SerializeField] private float _arcHeight = 2f;
 
     private Vector3 _startPosition;
+    private Vector3 _middlePosition;
     private Vector3 _endPosition;
-    private float _currentTime = 0f;
+    private float _currentTime;
     private float _inverseTravelTime;
+    private float _damage;
     private bool _isMoving = false;
-    private ArrowMoveType _moveType;
+    private SkillTableData _skillData;
 
     private ITarget _target;
     private System.Action<Arrow> _onEventReturnToPool = null;
@@ -55,27 +66,89 @@ public class Arrow : MonoBehaviour, IReusable
             _endPosition = target.GetPosition();
     }
 
+    public void SetDamage(float damage)
+    {
+        _damage = damage;
+    }
+
     public void SetEventReturnToPool(System.Action<Arrow> onEvent)
     {
         _onEventReturnToPool = onEvent;
     }
 
-    public void StartMove(ArrowMoveType moveType)
+    public void StartMove(SkillTableData skillData)
     {
         if (_target == null)
             return;
 
         _currentTime = 0f;
         _isMoving = true;
-        _moveType = moveType;
-        _inverseTravelTime = _travelTime > 0 ? 1 / _travelTime : 1;
+        _skillData = skillData;
+        _inverseTravelTime = 1 / TravelTime;
 
-        // 2D 회전: 타겟 방향으로 화살표 회전
-        Vector3 direction = _target.GetPosition() - transform.position;
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        transform.rotation = Quaternion.Euler(0f, 0f, angle);
+        SetMiddlePosition();
+
+        SetArrowType(skillData);
 
         SetActive(true);
+    }
+
+    private void SetMiddlePosition()
+    {
+        // 중간 경로가 있는 경우
+        if (MoveType == ArrowMoveType.HighDirect)
+            _middlePosition = _startPosition + Vector3.up * 7f;
+        else
+            _middlePosition = Vector3.zero;
+    }
+
+    private void SetArrowType(SkillTableData skillData)
+    {
+        if (skillData == null)
+        {
+            _trailRenderer.startColor = Color.white;
+            _trailRenderer.endColor = Color.white;
+        }
+        else
+        {
+            switch (skillData.EffectType)
+            {
+                case SkillEffectType.Damage:
+                    _trailRenderer.startColor = Color.white;
+                    _trailRenderer.endColor = Color.white;
+                    break;
+
+                case SkillEffectType.Fire:
+                    _trailRenderer.startColor = Color.red;
+                    _trailRenderer.endColor = Color.yellow;
+                    break;
+
+                case SkillEffectType.Poison:
+                    _trailRenderer.startColor = Color.green;
+                    _trailRenderer.endColor = Color.clear;
+                    break;
+
+                case SkillEffectType.Ice:
+                    _trailRenderer.startColor = Color.blue;
+                    _trailRenderer.endColor = Color.cyan;
+                    break;
+
+                case SkillEffectType.Lightning:
+                    _trailRenderer.startColor = Color.yellow;
+                    _trailRenderer.endColor = Color.white;
+                    break;
+
+                case SkillEffectType.Dark:
+                    _trailRenderer.startColor = Color.black;
+                    _trailRenderer.endColor = Color.gray;
+                    break;
+
+                case SkillEffectType.Heal:
+                    _trailRenderer.startColor = Color.magenta;
+                    _trailRenderer.endColor = Color.white;
+                    break;
+            }
+        }
     }
 
     private void Update()
@@ -91,7 +164,7 @@ public class Arrow : MonoBehaviour, IReusable
         bool isEnd = true;
         _currentTime += Time.deltaTime;
 
-        switch (_moveType)
+        switch (MoveType)
         {
             case ArrowMoveType.Direct:
                 {
@@ -105,6 +178,11 @@ public class Arrow : MonoBehaviour, IReusable
                 }
                 break;
 
+            case ArrowMoveType.HighDirect:
+                {
+                    isEnd = HighDirectMove();
+                }
+                break;
         }
 
         if (isEnd)
@@ -120,6 +198,8 @@ public class Arrow : MonoBehaviour, IReusable
         {
             _target.OnDamaged(this);
 
+            Debug.Log($"Shoot {other.transform.parent}");
+
             ReturnToPool();
         }
         else if (other.gameObject.layer == LayerMask.GetMask("Ground"))
@@ -134,7 +214,9 @@ public class Arrow : MonoBehaviour, IReusable
         float t = _currentTime * _inverseTravelTime;
 
         // 타임아웃 체크
-        if (t >= 1.5f) return true;
+        if (t >= 1.2f) return true;
+
+        LookAtTarget(in _endPosition);
 
         transform.position = _startPosition + (_endPosition - _startPosition) * t;
 
@@ -151,7 +233,7 @@ public class Arrow : MonoBehaviour, IReusable
         float t = _currentTime * _inverseTravelTime;
 
         // 타임아웃 체크
-        if (t >= 1.5f) return true;
+        if (t >= 1.2f) return true;
 
         // 제어점 계산 (중간점 + 위쪽 오프셋)
         float midX = (_startPosition.x + _endPosition.x) * 0.5f;
@@ -178,5 +260,44 @@ public class Arrow : MonoBehaviour, IReusable
         transform.rotation = Quaternion.Euler(0f, 0f, angle);
 
         return false;
+    }
+
+    private bool HighDirectMove()
+    {
+        // 진행도 계산 (0~1)
+        float t = _currentTime * _inverseTravelTime;
+
+        // 타임아웃 체크
+        if (t >= 1.2f) return true;
+
+        if (t < 0.6f)
+        {
+            float normalizedT = t / 0.6f;
+
+            LookAtTarget(in _middlePosition);
+            transform.position = _startPosition + (_middlePosition - _startPosition) * normalizedT;
+        }
+        else
+        {
+            float normalizedT = (t - 0.6f) / 0.4f;
+
+            LookAtTarget(in _endPosition);
+            transform.position = _middlePosition + (_endPosition - _middlePosition) * normalizedT;
+        }
+
+        return false;
+    }
+
+    private void LookAtTarget(in Vector3 targetPosition)
+    {
+        // 타겟 방향으로 화살표 회전
+        Vector3 direction = targetPosition - transform.position;
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0f, 0f, angle);
+    }
+
+    private SkillTableData GetSkillData()
+    {
+        return _skillData != null ? _skillData : SkillTableData.Default();
     }
 }

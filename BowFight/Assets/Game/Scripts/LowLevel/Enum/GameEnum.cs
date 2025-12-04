@@ -18,14 +18,25 @@ public enum BowLoadState
 public enum MoveState
 {
     None,
-    LeftMove,
-    RightMove
+    ForwardMove,
+    BackwardMove,
+    ForwardDash,
+    Shock
+}
+
+[System.Flags]
+public enum CrowdControlState
+{
+    None = 1 << 0,
+    Shock = 1 << 1,
+    Freeze = 1 << 2
 }
 
 public enum ArrowMoveType
 {
     Parabola,
-    Direct
+    Direct,
+    HighDirect
 }
 
 public enum BowConditionState
@@ -39,4 +50,38 @@ public enum BowActionType
     Pull,
     Release,
     Cancel
+}
+
+public enum SkillMoveType
+{
+    None,
+    Jump,
+    Dash
+}
+
+public enum SkillTargetType
+{
+    Target,
+    Self
+}
+
+public enum SkillEffectType
+{
+    Damage,
+    Fire,
+    Poison,
+    Ice,
+    Lightning,
+    Dark,
+    Heal
+}
+
+public enum BuffType
+{
+    Burning,
+    Poison,
+    Freeze,
+    Shock,
+    Blind,
+    Heal
 }

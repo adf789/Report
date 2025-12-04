@@ -11,7 +11,7 @@ public class AIState_Move : AIState
     private float _elapsedMoveTime;
     private MoveState _moveState;
 
-    private System.Action _onEventMoveUpdate = null;
+    private System.Action<MoveState> _onEventSetMove = null;
 
     public AIState_Move(AIController controller) : base(controller)
     {
@@ -43,14 +43,12 @@ public class AIState_Move : AIState
             SetMoveState();
         }
 
-        _controller.MoveArcher(_moveState);
-
-        _onEventMoveUpdate?.Invoke();
+        _onEventSetMove?.Invoke(_moveState);
     }
 
     public override void OnExit()
     {
-        _controller.MoveArcher(MoveState.None);
+        _onEventSetMove?.Invoke(MoveState.None);
     }
 
     public override AIState CheckTransition()
@@ -63,9 +61,9 @@ public class AIState_Move : AIState
         return null;
     }
 
-    public void SetEventMoveUpdate(System.Action onEvent)
+    public void SetEventMove(System.Action<MoveState> onEvent)
     {
-        _onEventMoveUpdate = onEvent;
+        _onEventSetMove = onEvent;
     }
 
     private void SetMoveState()

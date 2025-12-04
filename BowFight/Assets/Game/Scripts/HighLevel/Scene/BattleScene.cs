@@ -8,6 +8,11 @@ public class BattleScene : MonoBehaviour
     [SerializeField] private PlayerController _player;
     [SerializeField] private AIController _aiPlayer;
 
+    [Header("Camera")]
+    [SerializeField] private Camera _mainCamera;
+    [SerializeField] private Camera _maskCamera;
+    [SerializeField] private Camera _viewCamera;
+
     [Header("UI")]
     [SerializeField] private BattleMainUnit _battleUI;
 
@@ -33,10 +38,13 @@ public class BattleScene : MonoBehaviour
         LoadSkillTable();
 
         Initialize();
+
+        OnEventShowBlind(false);
     }
 
     void Update()
     {
+        // 디버그용
 #if UNITY_EDITOR
         if (UnityEngine.InputSystem.Keyboard.current.escapeKey.isPressed)
         {
@@ -47,6 +55,23 @@ public class BattleScene : MonoBehaviour
 
     private void Initialize()
     {
+        // AI 셋업
+        if (_aiPlayer)
+        {
+            var moveAreaBounds = _aiPlayerLimitMoveArea.bounds;
+            var skillDatas = GetRandomSkillDatas();
+
+            _aiPlayer.Archer.SetTarget(_player.Archer);
+            _aiPlayer.Archer.SetArrowPool(_arrowPool);
+            _aiPlayer.Archer.SetEvents(OnEventUpdateAIPlayerBuffs,
+            OnEventUpdateAIPlayerHp,
+            null,
+            OnEventShowAIPlayerDamage);
+
+            _aiPlayer.Initialize(skillDatas);
+            _aiPlayer.SetMoveLimit(moveAreaBounds.min.x, moveAreaBounds.max.x);
+        }
+
         // 플레이어 셋업
         if (_player)
         {
@@ -55,6 +80,10 @@ public class BattleScene : MonoBehaviour
 
             _player.Archer.SetTarget(_aiPlayer.Archer);
             _player.Archer.SetArrowPool(_arrowPool);
+            _player.Archer.SetEvents(OnEventUpdatePlayerBuffs,
+            OnEventUpdatePlayerHp,
+            OnEventShowBlind,
+            OnEventShowPlayerDamage);
 
             _player.Initialize(skillDatas);
             _player.SetMoveLimit(moveAreaBounds.min.x, moveAreaBounds.max.x);
@@ -68,21 +97,14 @@ public class BattleScene : MonoBehaviour
                 battleMainUnitModel.SetSkillDatas(skillDatas, _player.UseSkill);
 
                 _battleUI.SetModel(battleMainUnitModel);
+                _battleUI.SetEventBlindTargetPosition(_player.Archer.GetPosition);
+                _battleUI.SetCamera(_mainCamera, _viewCamera);
+
+                UpdateUIModelByPlayerHP(true, true);
+                UpdateUIModelByPlayerBuffs(true, true);
+
                 _battleUI.Show();
             }
-        }
-
-        // AI 셋업
-        if (_aiPlayer)
-        {
-            var moveAreaBounds = _aiPlayerLimitMoveArea.bounds;
-            var skillDatas = GetRandomSkillDatas();
-
-            _aiPlayer.Archer.SetTarget(_player.Archer);
-            _aiPlayer.Archer.SetArrowPool(_arrowPool);
-
-            _aiPlayer.Initialize(skillDatas);
-            _aiPlayer.SetMoveLimit(moveAreaBounds.min.x, moveAreaBounds.max.x);
         }
     }
 
@@ -108,6 +130,9 @@ public class BattleScene : MonoBehaviour
             int randomValue = 0;
             foreach (var data in _skillTable.GetAllDatas())
             {
+                if (!data.IsActive)
+                    continue;
+
                 if (addSkills.Contains(data.ID))
                     continue;
 
@@ -123,5 +148,104 @@ public class BattleScene : MonoBehaviour
         }
 
         return skillDatas.ToArray();
+    }
+
+    private void OnEventUpdatePlayerHp()
+    {
+        if (!_battleUI)
+            return;
+
+        UpdateUIModelByPlayerHP(true, false);
+
+        _battleUI.ShowPlayerStateBar();
+    }
+
+    private void OnEventUpdatePlayerBuffs()
+    {
+        if (!_battleUI)
+            return;
+
+        UpdateUIModelByPlayerBuffs(true, false);
+
+        _battleUI.ShowPlayerStateBar();
+    }
+
+    private void OnEventShowPlayerDamage(Vector2 position, int damage)
+    {
+        if (!_battleUI)
+            return;
+    }
+
+    private void OnEventUpdateAIPlayerHp()
+    {
+        if (!_battleUI)
+            return;
+
+        UpdateUIModelByPlayerHP(false, true);
+
+        _battleUI.ShowAIPlayerStateBar();
+    }
+
+    private void OnEventUpdateAIPlayerBuffs()
+    {
+        if (!_battleUI)
+            return;
+
+        UpdateUIModelByPlayerBuffs(false, true);
+
+        _battleUI.ShowAIPlayerStateBar();
+    }
+
+    private void OnEventShowAIPlayerDamage(Vector2 position, int damage)
+    {
+        if (!_battleUI)
+            return;
+    }
+
+    private void OnEventShowBlind(bool isActive)
+    {
+        if (_maskCamera)
+            _maskCamera.enabled = isActive;
+
+        if (_battleUI)
+            _battleUI.SetActiveBlind(isActive);
+    }
+
+    private void UpdateUIModelByPlayerHP(bool isPlayer, bool isAIPlayer)
+    {
+        if (isPlayer)
+        {
+            _battleUI.Model.PlayerStateBarModel.MaxHp = _player.Archer.MaxHP;
+            _battleUI.Model.PlayerStateBarModel.CurrentHp = _player.Archer.CurrentHP;
+        }
+
+        if (isAIPlayer)
+        {
+            _battleUI.Model.AIPlayerStateBarModel.MaxHp = _aiPlayer.Archer.MaxHP;
+            _battleUI.Model.AIPlayerStateBarModel.CurrentHp = _aiPlayer.Archer.CurrentHP;
+        }
+    }
+
+    private void UpdateUIModelByPlayerBuffs(bool isPlayer, bool isAIPlayer)
+    {
+        if (isPlayer)
+        {
+            _battleUI.Model.PlayerStateBarModel.ClearAffectedBuffs();
+
+            foreach (var buff in _player.Archer.GetAffectedBuffs())
+            {
+                _battleUI.Model.PlayerStateBarModel.AddAffectedBuff(buff.Thumbnail);
+            }
+        }
+
+        if (isAIPlayer)
+        {
+            _battleUI.Model.AIPlayerStateBarModel.ClearAffectedBuffs();
+
+            foreach (var buff in _aiPlayer.Archer.GetAffectedBuffs())
+            {
+                _battleUI.Model.AIPlayerStateBarModel.AddAffectedBuff(buff.Thumbnail);
+            }
+        }
     }
 }
