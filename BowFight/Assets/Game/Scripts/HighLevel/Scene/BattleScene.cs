@@ -35,6 +35,16 @@ public class BattleScene : MonoBehaviour
         Initialize();
     }
 
+    void Update()
+    {
+#if UNITY_EDITOR
+        if (UnityEngine.InputSystem.Keyboard.current.escapeKey.isPressed)
+        {
+            UnityEditor.EditorApplication.isPaused = true;
+        }
+#endif
+    }
+
     private void Initialize()
     {
         // 플레이어 셋업

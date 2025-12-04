@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7912138013405447582}
   - component: {fileID: 6463998804096714955}
-  - component: {fileID: 4166732351636488047}
+  - component: {fileID: 1495326869004061436}
   m_Layer: 8
   m_Name: Arrow
   m_TagString: Untagged
@@ -49,8 +49,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _travelTime: 2
   _arcHeight: 7
---- !u!58 &4166732351636488047
-CircleCollider2D:
+--- !u!70 &1495326869004061436
+CapsuleCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -83,8 +83,9 @@ CircleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_Radius: 0.02
+  m_Offset: {x: 0.34, y: 0}
+  m_Size: {x: 0.37, y: 0.07}
+  m_Direction: 1
 --- !u!1 &3282057183928493575
 GameObject:
   m_ObjectHideFlags: 0
@@ -111,7 +112,7 @@ Transform:
   m_GameObject: {fileID: 3282057183928493575}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0.156}
+  m_LocalPosition: {x: -0.395, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -259,13 +260,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3954361543904413125}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.00000024957035, y: 0.7071068, z: 0.70710677, w: -0.00000025898436}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: 0, y: 0, z: -0.7071068, w: 0.7071068}
+  m_LocalPosition: {x: -0.5, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7912138013405447582}
-  m_LocalEulerAnglesHint: {x: -90, y: 0, z: 180}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -90}
 --- !u!33 &629435879993804070
 MeshFilter:
   m_ObjectHideFlags: 0

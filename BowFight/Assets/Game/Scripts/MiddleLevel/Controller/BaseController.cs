@@ -19,11 +19,12 @@ public class BaseController : MonoBehaviour
     private float _shootTime;
     private float _accelation = 0f;
     private float _prevVelocityY = 0f;
+    private float _useSkillTime = 0f;
     private bool _isJumping = false;
-    private Queue<Action> _afterJumpEvents = new();
 
     private readonly int ATTACK_FIRST_DELAY = 2;
     private readonly int ACCELATION_WEIGHT = 2;
+    private readonly float USE_SKILL_DELAY = 0.5f;
 
     public virtual void Initialize(SkillTableData[] skillDatas)
     {
@@ -64,11 +65,14 @@ public class BaseController : MonoBehaviour
 
         _shootTime = Time.realtimeSinceStartup;
 
-        _archer.Fire();
+        _archer.Shoot();
     }
 
     protected bool ShootSkillArrow(int index)
     {
+        if (!CheckSkillDelay())
+            return false;
+
         var skillData = GetSkillData(index);
 
         if (skillData == null)
@@ -80,24 +84,18 @@ public class BaseController : MonoBehaviour
         // 일반 공격 지연
         _shootTime = Time.realtimeSinceStartup;
 
+        // 스킬 준비
+        _archer.ReadySkillShoot(skillData);
+
         // 점프 후 발사하는 경우
         // 최고점에 도달 후 발사하도록 지연 발사를 적용
         if (skillData.IsJump)
         {
-            if (skillData.IsDirect)
-                _afterJumpEvents.Enqueue(_archer.DirectFire);
-            else
-                _afterJumpEvents.Enqueue(_archer.Fire);
-
             Jump();
         }
-        // 바로 발사의 경우
         else
         {
-            if (skillData.IsDirect)
-                _archer.DirectFire();
-            else
-                _archer.Fire();
+            _archer.SkillShoot();
         }
 
         return true;
@@ -167,17 +165,13 @@ public class BaseController : MonoBehaviour
     {
         if (CheckJumpHighestPoint())
         {
-            OnAfterJumpEvents();
+            OnAfterJump();
         }
     }
 
-    private void OnAfterJumpEvents()
+    private void OnAfterJump()
     {
-        while (_afterJumpEvents.Count > 0)
-        {
-            var func = _afterJumpEvents.Dequeue();
-            func?.Invoke();
-        }
+        _archer.SkillShoot();
     }
 
     private bool CheckJumpHighestPoint()
@@ -193,5 +187,15 @@ public class BaseController : MonoBehaviour
         _prevVelocityY = _rigidBody.linearVelocityY;
 
         return change;
+    }
+
+    private bool CheckSkillDelay()
+    {
+        if (_useSkillTime + USE_SKILL_DELAY > Time.realtimeSinceStartup)
+            return false;
+
+        _useSkillTime = Time.realtimeSinceStartup;
+
+        return true;
     }
 }

@@ -2,7 +2,17 @@ public enum AnimationState
 {
     Idle,
     Move,
-    Jump
+    Jump,
+    Shoot,
+    SkillShoot,
+    SkillShootReady
+}
+
+public enum BowLoadState
+{
+    None,
+    Load,
+    Shoot
 }
 
 public enum MoveState
@@ -14,8 +24,8 @@ public enum MoveState
 
 public enum ArrowMoveType
 {
-    Direct,
-    Parabola
+    Parabola,
+    Direct
 }
 
 public enum BowConditionState

@@ -70,6 +70,11 @@ public class Arrow : MonoBehaviour, IReusable
         _moveType = moveType;
         _inverseTravelTime = _travelTime > 0 ? 1 / _travelTime : 1;
 
+        // 2D 회전: 타겟 방향으로 화살표 회전
+        Vector3 direction = _target.GetPosition() - transform.position;
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0f, 0f, angle);
+
         SetActive(true);
     }
 
