@@ -84,14 +84,14 @@ public class BattleView : BaseUnit<BattleViewModel>
         }
     }
 
-    public void ShowDamage(Vector3 position, float damage)
+    public void ShowDamage(Vector3 position, float damage, SkillEffectType effectType)
     {
         var parent = _damagePool.transform as RectTransform;
         var localPos = GetLocalPosition(parent, position);
         var damageUnit = _damagePool.Get();
 
         damageUnit.transform.localPosition = localPos;
-        damageUnit.SetModel(new DamageUnitModel((int)damage));
+        damageUnit.SetModel(new DamageUnitModel((int)damage, effectType));
         damageUnit.SetEventReturnToPool(OnEventReturnToDamagePool);
 
         damageUnit.Show();

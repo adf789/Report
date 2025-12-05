@@ -174,12 +174,12 @@ public class BattleScene : MonoBehaviour
         _battleUI.ShowPlayerStateBar();
     }
 
-    private void OnEventShowDamage(Vector3 position, int damage)
+    private void OnEventShowDamage(Vector3 position, int damage, SkillEffectType effectType)
     {
         if (!_battleUI || damage == 0)
             return;
 
-        _battleUI.ShowDamage(position, damage);
+        _battleUI.ShowDamage(position, damage, effectType);
     }
 
     private void OnEventUpdateAIPlayerHp()

@@ -41,7 +41,7 @@ public class Archer : MonoBehaviour, ITarget
     private Action _onEventUpdateBuffUI = null;
     private Action _onEventUpdateHp = null;
     private Action<bool> _onEventBlind = null;
-    private Action<Vector3, int> _onEventShowDamage = null;
+    private Action<Vector3, int, SkillEffectType> _onEventShowDamage = null;
 
     private readonly float UPDATE_BUFF_TIME = 0.1f;
 
@@ -68,7 +68,7 @@ public class Archer : MonoBehaviour, ITarget
     public void SetEvents(Action onEventUpdateBuffUI,
     Action onEventUpdateHp,
     Action<bool> onEventBlind,
-    Action<Vector3, int> onEventShowDamage)
+    Action<Vector3, int, SkillEffectType> onEventShowDamage)
     {
         _onEventUpdateBuffUI = onEventUpdateBuffUI;
         _onEventUpdateHp = onEventUpdateHp;
@@ -302,7 +302,7 @@ public class Archer : MonoBehaviour, ITarget
     {
         // 데미지 적용
         AddHp(-damage);
-        _onEventShowDamage?.Invoke(position, (int)damage);
+        _onEventShowDamage?.Invoke(position, (int)damage, SkillEffectType.Damage);
 
         // 버프 적용
         if (skillData != null && skillData.Duration > 0)
@@ -405,7 +405,8 @@ public class Archer : MonoBehaviour, ITarget
                         AddHp(-affectValue);
 
                         var position = GetRandomPosition();
-                        _onEventShowDamage?.Invoke(position, (int)affectValue);
+                        var effectType = buff.Type == BuffType.Burning ? SkillEffectType.Fire : SkillEffectType.Poison;
+                        _onEventShowDamage?.Invoke(position, (int)affectValue, effectType);
                     }
                 }
                 break;
@@ -441,7 +442,7 @@ public class Archer : MonoBehaviour, ITarget
                         AddHp(affectValue);
 
                         var position = GetRandomPosition();
-                        _onEventShowDamage?.Invoke(position, (int)affectValue);
+                        _onEventShowDamage?.Invoke(position, (int)affectValue, SkillEffectType.Heal);
                     }
                 }
                 break;

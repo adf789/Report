@@ -2,7 +2,6 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class DamageUnit : BaseUnit<DamageUnitModel>, IReusable
 {
@@ -47,6 +46,37 @@ public class DamageUnit : BaseUnit<DamageUnitModel>, IReusable
     private void ShowDamage()
     {
         _damageText.text = Model.Damage.ToString("n0");
+
+        switch (Model.EffectType)
+        {
+            case SkillEffectType.Fire:
+                _damageText.color = Color.red;
+                break;
+
+            case SkillEffectType.Poison:
+                _damageText.color = Color.green;
+                break;
+
+            case SkillEffectType.Ice:
+                _damageText.color = Color.cyan;
+                break;
+
+            case SkillEffectType.Lightning:
+                _damageText.color = Color.yellow;
+                break;
+
+            case SkillEffectType.Dark:
+                _damageText.color = Color.gray;
+                break;
+
+            case SkillEffectType.Heal:
+                _damageText.color = Color.magenta;
+                break;
+
+            default:
+                _damageText.color = Color.white;
+                break;
+        }
     }
 
     private async UniTaskVoid PlayAnimation()
