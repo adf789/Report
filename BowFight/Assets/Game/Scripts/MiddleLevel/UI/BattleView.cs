@@ -1,20 +1,39 @@
 using System;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
-public class BattleMainUnit : BaseUnit<BattleMainUnitModel>
+public class BattleView : BaseUnit<BattleViewModel>
 {
+    [Header("캐릭터 상태")]
     [SerializeField] private StateBarUnit _playerStateBar;
     [SerializeField] private StateBarUnit _aiPlayerStateBar;
+
+    [Header("실명 효과")]
     [SerializeField] private GameObject _blind;
     [SerializeField] private Transform _blindCircle;
+
+    [Header("스킬 카드")]
     [SerializeField] private SkillUnit[] _skillUnits;
+
+    [Header("데미지 텍스트")]
     [SerializeField] private DamageObjectPool _damagePool;
+
+    [Header("결과 화면")]
+    [SerializeField] private Image _resultScreen;
+    [SerializeField] private Button _resultButton;
+    [SerializeField] private GameObject _victoryText;
+    [SerializeField] private GameObject _defeatText;
+    [SerializeField] private TextMeshProUGUI _continueText;
 
     private Camera _mainCamera;
     private Camera _viewCamera;
 
     private Func<Vector3> _onEventBlindTargetPosition = null;
+    private Action _onEventReturnToIntro = null;
+    private bool _isResultOn = false;
 
     void Start()
     {
@@ -26,6 +45,7 @@ public class BattleMainUnit : BaseUnit<BattleMainUnitModel>
         ShowPlayerStateBar();
         ShowAIPlayerStateBar();
         ShowSkillUnits();
+        StartActiveResultScreen(false, false);
     }
 
     void LateUpdate()
@@ -96,9 +116,27 @@ public class BattleMainUnit : BaseUnit<BattleMainUnitModel>
         _onEventBlindTargetPosition = onEvent;
     }
 
+    public void SetEventReturnToIntro(Action onEvent)
+    {
+        _onEventReturnToIntro = onEvent;
+    }
+
     public void SetActiveBlind(bool isActive)
     {
         _blind.SetActive(isActive);
+    }
+
+    public void StartActiveResultScreen(bool isActive, bool isWin)
+    {
+        if (isActive
+        && isActive != _resultScreen.gameObject.activeSelf)
+        {
+            if (!_isResultOn)
+                OnEventActiveResult(isWin).Forget();
+            return;
+        }
+
+        _resultScreen.gameObject.SetActive(isActive);
     }
 
     private Vector3 GetBlindTargetPosition()
@@ -132,8 +170,51 @@ public class BattleMainUnit : BaseUnit<BattleMainUnitModel>
         Model.OnEventMoveStop?.Invoke();
     }
 
+    public void OnClickReturnToIntro()
+    {
+        _onEventReturnToIntro?.Invoke();
+    }
+
     private void OnEventReturnToDamagePool(DamageUnit damageUnit)
     {
         _damagePool.Add(damageUnit);
+    }
+
+    private async UniTask OnEventActiveResult(bool isWin)
+    {
+        _isResultOn = true;
+        _victoryText.SetActive(false);
+        _defeatText.SetActive(false);
+        _continueText.gameObject.SetActive(false);
+        _resultButton.enabled = false;
+
+        Color resultColor = isWin ? Color.white : Color.black;
+        Color continueTextColor = isWin ? Color.black : Color.white;
+        resultColor.a = 0;
+        _resultScreen.color = resultColor;
+        _continueText.color = continueTextColor;
+
+        _resultScreen.gameObject.SetActive(true);
+
+        while (resultColor.a < 1)
+        {
+            resultColor.a += Time.deltaTime;
+            _resultScreen.color = resultColor;
+
+            await UniTask.Yield();
+        }
+
+        resultColor.a = 1;
+        _resultScreen.color = resultColor;
+
+        if (isWin)
+            _victoryText.SetActive(true);
+        else
+            _defeatText.SetActive(true);
+
+        await UniTask.Delay(1000);
+
+        _continueText.gameObject.SetActive(true);
+        _resultButton.enabled = true;
     }
 }

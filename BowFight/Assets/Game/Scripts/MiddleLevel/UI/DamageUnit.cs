@@ -1,3 +1,4 @@
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
@@ -18,6 +19,7 @@ public class DamageUnit : BaseUnit<DamageUnitModel>, IReusable
     private CanvasGroup _canvasGroup;
     private RectTransform _rectTransform;
     private System.Action<DamageUnit> _onEventReturnToPool;
+    private CancellationTokenSource _animation;
 
     private void Awake()
     {
@@ -29,11 +31,17 @@ public class DamageUnit : BaseUnit<DamageUnitModel>, IReusable
             _canvasGroup = gameObject.AddComponent<CanvasGroup>();
     }
 
-    [ContextMenu("Show")]
     public override void Show()
     {
         ShowDamage();
+
+        StopAnimation();
         PlayAnimation().Forget();
+    }
+
+    void OnDisable()
+    {
+        StopAnimation();
     }
 
     private void ShowDamage()
@@ -43,6 +51,8 @@ public class DamageUnit : BaseUnit<DamageUnitModel>, IReusable
 
     private async UniTaskVoid PlayAnimation()
     {
+        _animation = new CancellationTokenSource();
+
         // 랜덤 방향과 높이 설정
         float randomHeight = Random.Range(_minHeight, _maxHeight);
         float randomX = Random.Range(-_horizontalRange, _horizontalRange);
@@ -73,11 +83,26 @@ public class DamageUnit : BaseUnit<DamageUnitModel>, IReusable
             // 페이드 아웃
             _canvasGroup.alpha = _alphaCurve.Evaluate(t);
 
-            await UniTask.Yield();
+            if (await UniTask.Yield(cancellationToken: _animation.Token).SuppressCancellationThrow())
+                break;
         }
 
         // 애니메이션 종료 후 비활성화
-        gameObject.SetActive(false);
+        if (this)
+        {
+            gameObject.SetActive(false);
+            _animation = null;
+        }
+    }
+
+    private void StopAnimation()
+    {
+        if (_animation != null)
+        {
+            _animation.Cancel();
+            _animation.Dispose();
+            _animation = null;
+        }
     }
 
     public void SetEventReturnToPool(System.Action<DamageUnit> onEvent)

@@ -14,7 +14,7 @@ public class BattleScene : MonoBehaviour
     [SerializeField] private Camera _viewCamera;
 
     [Header("UI")]
-    [SerializeField] private BattleMainUnit _battleUI;
+    [SerializeField] private BattleView _battleUI;
 
     [Header("ObjectPool")]
     [SerializeField] private ArrowObjectPool _arrowPool;
@@ -31,12 +31,12 @@ public class BattleScene : MonoBehaviour
     void Awake()
     {
         _arrowPool.Initialize();
+
+        LoadSkillTable();
     }
 
     void Start()
     {
-        LoadSkillTable();
-
         Initialize();
 
         OnEventShowBlind(false);
@@ -91,13 +91,14 @@ public class BattleScene : MonoBehaviour
             // UI 셋업
             if (_battleUI)
             {
-                var battleMainUnitModel = new BattleMainUnitModel();
+                var battleMainUnitModel = new BattleViewModel();
 
                 battleMainUnitModel.SetEvents(_player.RightMove, _player.LeftMove, _player.StopMove);
                 battleMainUnitModel.SetSkillDatas(skillDatas, _player.UseSkill);
 
                 _battleUI.SetModel(battleMainUnitModel);
                 _battleUI.SetEventBlindTargetPosition(_player.Archer.GetPosition);
+                _battleUI.SetEventReturnToIntro(OnEventReturnToIntro);
                 _battleUI.SetCamera(_mainCamera, _viewCamera);
 
                 UpdateUIModelByPlayerHP(true, true);
@@ -158,6 +159,9 @@ public class BattleScene : MonoBehaviour
         UpdateUIModelByPlayerHP(true, false);
 
         _battleUI.ShowPlayerStateBar();
+
+        if (_player.Archer.CurrentHP <= float.Epsilon)
+            OnEventEndGame(false);
     }
 
     private void OnEventUpdatePlayerBuffs()
@@ -172,7 +176,7 @@ public class BattleScene : MonoBehaviour
 
     private void OnEventShowDamage(Vector3 position, int damage)
     {
-        if (!_battleUI)
+        if (!_battleUI || damage == 0)
             return;
 
         _battleUI.ShowDamage(position, damage);
@@ -186,6 +190,9 @@ public class BattleScene : MonoBehaviour
         UpdateUIModelByPlayerHP(false, true);
 
         _battleUI.ShowAIPlayerStateBar();
+
+        if (_aiPlayer.Archer.CurrentHP <= float.Epsilon)
+            OnEventEndGame(true);
     }
 
     private void OnEventUpdateAIPlayerBuffs()
@@ -205,6 +212,19 @@ public class BattleScene : MonoBehaviour
 
         if (_battleUI)
             _battleUI.SetActiveBlind(isActive);
+    }
+
+    private void OnEventEndGame(bool isWin)
+    {
+        _player.SetPause(true);
+        _aiPlayer.SetPause(true);
+
+        _battleUI?.StartActiveResultScreen(true, isWin);
+    }
+
+    private void OnEventReturnToIntro()
+    {
+        UnityEngine.SceneManagement.SceneManager.LoadScene($"Game/Scenes/IntroScene");
     }
 
     private void UpdateUIModelByPlayerHP(bool isPlayer, bool isAIPlayer)

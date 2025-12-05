@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-public class BattleMainUnitModel : IUnitModel
+public class BattleViewModel : IUnitModel
 {
     public int SkillCount => _skillUnitModel != null ? _skillUnitModel.Length : 0;
     public Action OnEventRightMove { get; private set; }

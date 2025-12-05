@@ -26,7 +26,7 @@ public class SkillTableData : BaseTableData
     [SerializeField] private float _durationDamageRate = 0.1f;
 
     [Tooltip("속력")]
-    [Range(0.5f, 2f)]
+    [Range(0.5f, 3f)]
     [SerializeField] private float _arrowMoveSpeed = 1;
 
     [Tooltip("지속시간")]

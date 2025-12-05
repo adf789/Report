@@ -2,15 +2,14 @@ using UnityEngine;
 
 public class IntroScene : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    void Awake()
     {
-
+        Application.runInBackground = true;
+        Application.targetFrameRate = 60;
     }
 
-    // Update is called once per frame
-    void Update()
+    public void MoveToBattleScene()
     {
-
+        UnityEngine.SceneManagement.SceneManager.LoadScene($"Game/Scenes/BattleScene");
     }
 }

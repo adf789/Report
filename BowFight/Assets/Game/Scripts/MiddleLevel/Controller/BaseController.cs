@@ -14,6 +14,7 @@ public class BaseController : MonoBehaviour
     protected SkillTableData[] _skillDatas = null;
     protected float _minX;
     protected float _maxX;
+    protected bool _isPause = false;
     private float _shootTime;
     private float _accelation = 0f;
     private float _prevVelocityY = 0f;
@@ -24,6 +25,7 @@ public class BaseController : MonoBehaviour
     private readonly int ATTACK_FIRST_DELAY = 2;
     private readonly int ACCELATION_WEIGHT = 2;
     private readonly float USE_SKILL_DELAY = 0.5f;
+    private readonly float DASH_TIME = 0.5f;
 
     public virtual void Initialize(SkillTableData[] skillDatas)
     {
@@ -37,6 +39,11 @@ public class BaseController : MonoBehaviour
     {
         _minX = minX;
         _maxX = maxX;
+    }
+
+    public void SetPause(bool isPause)
+    {
+        _isPause = isPause;
     }
 
     public SkillTableData GetSkillData(int index)
@@ -61,7 +68,7 @@ public class BaseController : MonoBehaviour
 
     protected void Dash()
     {
-        _remainDashTime = 0.5f;
+        _remainDashTime = DASH_TIME;
 
         _archer.Move(MoveState.ForwardDash);
     }
@@ -129,6 +136,9 @@ public class BaseController : MonoBehaviour
 
     protected void OnUpdateMove()
     {
+        if (_isPause)
+            return;
+
         if (!OnUpdateDash())
             OnUpdateSideMove();
 
@@ -235,7 +245,7 @@ public class BaseController : MonoBehaviour
     {
         _remainDashTime = 0;
 
-        _archer.Move(MoveState.None);
+        _archer.ImmediateStopMove();
         _archer.SkillShoot();
     }
 

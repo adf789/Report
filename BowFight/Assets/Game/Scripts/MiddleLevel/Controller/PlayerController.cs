@@ -10,11 +10,17 @@ public class PlayerController : BaseController
 
     public void LeftMove()
     {
+        if (_isPause)
+            return;
+
         _archer.Move(MoveState.BackwardMove);
     }
 
     public void RightMove()
     {
+        if (_isPause)
+            return;
+
         _archer.Move(MoveState.ForwardMove);
     }
 
@@ -25,6 +31,9 @@ public class PlayerController : BaseController
 
     public bool UseSkill(int index)
     {
+        if (_isPause)
+            return false;
+
         return ShootSkillArrow(index);
     }
 }

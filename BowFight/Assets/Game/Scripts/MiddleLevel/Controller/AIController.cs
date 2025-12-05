@@ -18,12 +18,14 @@ public class AIController : BaseController
 
     private void Update()
     {
-        _stateMachine?.Update();
+        if (!_isPause)
+            _stateMachine?.Update();
     }
 
     private void FixedUpdate()
     {
-        _stateMachine?.FixedUpdate();
+        if (!_isPause)
+            _stateMachine?.FixedUpdate();
 
         OnUpdateMove();
     }

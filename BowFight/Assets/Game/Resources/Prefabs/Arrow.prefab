@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 7912138013405447582}
   - component: {fileID: 6463998804096714955}
   - component: {fileID: 1495326869004061436}
+  - component: {fileID: 2227509913807428261}
   m_Layer: 8
   m_Name: Arrow
   m_TagString: Untagged
@@ -48,6 +49,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _trailRenderer: {fileID: 1366742610318559982}
+  _collider: {fileID: 1495326869004061436}
+  _renderer: {fileID: 8964845083528079686}
   _travelTime: 2
   _arcHeight: 7
 --- !u!70 &1495326869004061436
@@ -87,6 +90,33 @@ CapsuleCollider2D:
   m_Offset: {x: 0.34, y: 0}
   m_Size: {x: 0.37, y: 0.07}
   m_Direction: 1
+--- !u!50 &2227509913807428261
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1225370512109555040}
+  m_BodyType: 0
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 0
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0
 --- !u!1 &3282057183928493575
 GameObject:
   m_ObjectHideFlags: 0
@@ -284,7 +314,7 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3954361543904413125}
   m_Enabled: 1
-  m_CastShadows: 1
+  m_CastShadows: 0
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
@@ -299,7 +329,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 5f38d5dab83948b4ba8b9fa1383d4823, type: 2}
+  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

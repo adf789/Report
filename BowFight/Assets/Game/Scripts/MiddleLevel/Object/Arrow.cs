@@ -9,6 +9,8 @@ public class Arrow : MonoBehaviour, IReusable
 
     [Header("References")]
     [SerializeField] private TrailRenderer _trailRenderer;
+    [SerializeField] private Collider2D _collider;
+    [SerializeField] private MeshRenderer _renderer;
 
     [Header("Common Move Setting")]
     [Range(0.5f, 2f)]
@@ -24,8 +26,8 @@ public class Arrow : MonoBehaviour, IReusable
     private float _inverseTravelTime;
     private float _damage;
     private bool _isMoving = false;
+    private bool _isFadeOut = false;
     private SkillTableData _skillData;
-
     private ITarget _target;
     private System.Action<Arrow> _onEventReturnToPool = null;
 
@@ -83,23 +85,41 @@ public class Arrow : MonoBehaviour, IReusable
 
         _currentTime = 0f;
         _isMoving = true;
+        _isFadeOut = false;
         _skillData = skillData;
         _inverseTravelTime = 1 / TravelTime;
+        _collider.enabled = true;
+        _trailRenderer.enabled = true;
 
         SetMiddlePosition();
 
         SetArrowType(skillData);
 
+        SetAlpha(1f);
+
         SetActive(true);
+    }
+
+    private void StartFadeOut()
+    {
+        _currentTime = 0f;
+        _isMoving = false;
+        _isFadeOut = true;
+        _collider.enabled = false;
+        _trailRenderer.enabled = false;
     }
 
     private void SetMiddlePosition()
     {
         // 중간 경로가 있는 경우
         if (MoveType == ArrowMoveType.HighDirect)
+        {
             _middlePosition = _startPosition + Vector3.up * 7f;
+        }
         else
+        {
             _middlePosition = Vector3.zero;
+        }
     }
 
     private void SetArrowType(SkillTableData skillData)
@@ -151,18 +171,32 @@ public class Arrow : MonoBehaviour, IReusable
         }
     }
 
+    private void SetAlpha(float alpha)
+    {
+        alpha = Mathf.Clamp01(alpha);
+
+        var color = _renderer.material.color;
+        color.a = alpha;
+        _renderer.material.color = color;
+    }
+
     private void Update()
+    {
+        OnUpdateFadeOut();
+    }
+
+    private void FixedUpdate()
     {
         OnUpdateArrowTranjectory();
     }
 
     private void OnUpdateArrowTranjectory()
     {
-        if (!_isMoving)
+        if (!_isMoving || _isFadeOut)
             return;
 
         bool isEnd = true;
-        _currentTime += Time.deltaTime;
+        _currentTime += Time.fixedDeltaTime;
 
         switch (MoveType)
         {
@@ -189,6 +223,23 @@ public class Arrow : MonoBehaviour, IReusable
             ReturnToPool();
     }
 
+    private void OnUpdateFadeOut()
+    {
+        if (!_isFadeOut)
+            return;
+
+        // 진행도 계산
+        _currentTime += Time.deltaTime * 1.5f;
+
+        SetAlpha(1 - _currentTime);
+
+        if (_currentTime >= 1f)
+        {
+            _isFadeOut = false;
+            ReturnToPool();
+        }
+    }
+
     void OnTriggerEnter2D(Collider2D other)
     {
         if (_target == null)
@@ -196,15 +247,13 @@ public class Arrow : MonoBehaviour, IReusable
 
         if (other.gameObject.GetInstanceID() == _target.InstanceID)
         {
+            StartFadeOut();
+
             _target.OnDamaged(this);
-
-            Debug.Log($"Shoot {other.transform.parent}");
-
-            ReturnToPool();
         }
-        else if (other.gameObject.layer == LayerMask.GetMask("Ground"))
+        else if (other.gameObject.layer == LayerMask.NameToLayer("Ground"))
         {
-            ReturnToPool();
+            StartFadeOut();
         }
     }
 
@@ -214,7 +263,7 @@ public class Arrow : MonoBehaviour, IReusable
         float t = _currentTime * _inverseTravelTime;
 
         // 타임아웃 체크
-        if (t >= 1.2f) return true;
+        if (t >= 2f) return true;
 
         LookAtTarget(in _endPosition);
 
@@ -233,7 +282,7 @@ public class Arrow : MonoBehaviour, IReusable
         float t = _currentTime * _inverseTravelTime;
 
         // 타임아웃 체크
-        if (t >= 1.2f) return true;
+        if (t >= 2f) return true;
 
         // 제어점 계산 (중간점 + 위쪽 오프셋)
         float midX = (_startPosition.x + _endPosition.x) * 0.5f;
@@ -268,7 +317,7 @@ public class Arrow : MonoBehaviour, IReusable
         float t = _currentTime * _inverseTravelTime;
 
         // 타임아웃 체크
-        if (t >= 1.2f) return true;
+        if (t >= 2f) return true;
 
         if (t < 0.6f)
         {

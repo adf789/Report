@@ -84,11 +84,18 @@ public class Archer : MonoBehaviour, ITarget
 
     public void ReadySkillShoot(SkillTableData skillData)
     {
-        ReloadSkillArrow(skillData);
+        if (skillData.TargetType == SkillTargetType.Self)
+        {
+            ApplySelfSkill(skillData);
+        }
+        else
+        {
+            ReloadSkillArrow(skillData);
 
-        CancelBowAnimation();
+            CancelBowAnimation();
 
-        _animator.SetTrigger(AnimationState.SkillShootReady.ToString());
+            _animator.SetTrigger(AnimationState.SkillShootReady.ToString());
+        }
     }
 
     public void SkillShoot()
@@ -100,21 +107,35 @@ public class Archer : MonoBehaviour, ITarget
     {
         _moveState = state;
 
-        if (_crowdControlState.HasFlag(CrowdControlState.Freeze)
-        || _crowdControlState.HasFlag(CrowdControlState.Shock))
+        // 쇼크 상태면 움직일 수 없게
+        if (_crowdControlState.HasFlag(CrowdControlState.Shock))
             _moveState = MoveState.None;
+    }
+
+    public void ImmediateStopMove()
+    {
+        Move(MoveState.None);
+
+        _moveDirection = 0;
+        _animator.SetFloat("MoveDirection", _moveDirection);
     }
 
     private void AddCrowdControl(CrowdControlState state)
     {
         _crowdControlState |= state;
 
-        Move(MoveState.None);
+        if (state == CrowdControlState.Shock)
+            Move(MoveState.None);
+        else if (state == CrowdControlState.Freeze)
+            _animator.speed = 0.3f;
     }
 
     private void RemoveCrowdControl(CrowdControlState state)
     {
         _crowdControlState &= ~state;
+
+        if (state == CrowdControlState.Freeze)
+            _animator.speed = 1f;
     }
 
     public void Jump()
@@ -142,7 +163,7 @@ public class Archer : MonoBehaviour, ITarget
         if (value == 0)
             return;
 
-        _currentHp += value;
+        _currentHp = Mathf.Max(0, _currentHp + value);
 
         _onEventUpdateHp?.Invoke();
     }
@@ -150,6 +171,11 @@ public class Archer : MonoBehaviour, ITarget
     public Vector3 GetPosition()
     {
         return _targetCollider ? _targetCollider.bounds.center : transform.position;
+    }
+
+    public float GetMinSpawnHeight()
+    {
+        return _targetCollider ? _targetCollider.bounds.min.y : 0;
     }
 
     public IEnumerable<IBuffData> GetAffectedBuffs()
@@ -162,18 +188,25 @@ public class Archer : MonoBehaviour, ITarget
 
     public void OnDamaged(Arrow arrow)
     {
+        if (arrow == null)
+            return;
+
+        OnApplyArrowEffect(arrow.transform.position, arrow.Damage, arrow.SkillData);
+    }
+
+    private void OnApplyArrowEffect(Vector3 position, float damage, SkillTableData skillData)
+    {
         // 데미지 적용
-        AddHp(-arrow.Damage);
-        _onEventShowDamage?.Invoke(arrow.transform.position, (int)arrow.Damage);
+        AddHp(-damage);
+        _onEventShowDamage?.Invoke(position, (int)damage);
 
         // 버프 적용
-        if (arrow.SkillData != null
-        && arrow.SkillData.Duration > 0)
+        if (skillData != null && skillData.Duration > 0)
         {
             // 이미 적용된 버프인지 확인
-            if (!CheckAlreadyAffectedBuff(arrow.SkillData.ID))
+            if (!CheckAlreadyAffectedBuff(skillData.ID))
             {
-                var newBuff = GetBuffData(arrow.SkillData);
+                var newBuff = GetBuffData(skillData);
 
                 if (newBuff != null)
                 {
@@ -386,11 +419,18 @@ public class Archer : MonoBehaviour, ITarget
 
             for (int i = 0; i < skillData.SpawnCount; i++)
             {
+                // 화살 데미지 설정
                 float damage = _attackDamage * skillData.DamageRate / skillData.SpawnCount;
 
+                // 화살 위치 설멍
                 Vector2 randomCircle = UnityEngine.Random.insideUnitCircle * skillData.SpawnRadius;
                 Vector3 newPosition = position + (Vector3)randomCircle;
+                float minHeight = GetMinSpawnHeight();
 
+                // 화살 최소 높이 설정
+                newPosition.y = Mathf.Max(newPosition.y, minHeight);
+
+                // 화살 이동 시작
                 StartArrowMove(skillData, newPosition, damage);
             }
         }
@@ -410,6 +450,16 @@ public class Archer : MonoBehaviour, ITarget
         arrow.SetTarget(skillData.TargetType == SkillTargetType.Self ? this : _target);
         arrow.SetDamage(damage);
         arrow.StartMove(skillData);
+    }
+
+    private void ApplySelfSkill(SkillTableData skillData)
+    {
+        for (int i = 0; i < skillData.SpawnCount; i++)
+        {
+            float damage = _attackDamage * skillData.DamageRate / skillData.SpawnCount;
+
+            OnApplyArrowEffect(GetPosition(), damage, skillData);
+        }
     }
 
     private void ReloadSkillArrow(SkillTableData skillData)

@@ -12,13 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 371705ece2f2f4243a833a0b72097981, type: 3}
   m_Name: 005_DashShot
   m_EditorClassIdentifier: 
-  _isActive: 0
+  _isActive: 1
   _id: 5
   _name: DashShot
   _thumbnail: Sprites/SkillIcons/skill_216
   _damageRate: 0.8
   _durationDamageRate: 0.1
-  _arrowMoveSpeed: 1
+  _arrowMoveSpeed: 2
   _duration: 0
   _coolTime: 3
   _spawnCount: 1
@@ -39,7 +39,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 371705ece2f2f4243a833a0b72097981, type: 3}
   m_Name: 001_JumpShot
   m_EditorClassIdentifier: 
-  _isActive: 0
+  _isActive: 1
   _id: 1
   _name: JumpShot
   _thumbnail: Sprites/SkillIcons/skill_024
@@ -66,7 +66,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 371705ece2f2f4243a833a0b72097981, type: 3}
   m_Name: 003_DirectJumpShot
   m_EditorClassIdentifier: 
-  _isActive: 0
+  _isActive: 1
   _id: 3
   _name: DirectJumpShot
   _thumbnail: Sprites/SkillIcons/skill_103
@@ -104,6 +104,7 @@ MonoBehaviour:
   - {fileID: 4504678996073883518}
   - {fileID: 3623225284825348363}
   - {fileID: 6367964353617522555}
+  - {fileID: 7730567066814218438}
 --- !u!114 &207686492604405101
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -116,7 +117,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 371705ece2f2f4243a833a0b72097981, type: 3}
   m_Name: 004_HighShot
   m_EditorClassIdentifier: 
-  _isActive: 0
+  _isActive: 1
   _id: 4
   _name: HighShot
   _thumbnail: Sprites/SkillIcons/skill_214
@@ -143,7 +144,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 371705ece2f2f4243a833a0b72097981, type: 3}
   m_Name: 002_DirectShot
   m_EditorClassIdentifier: 
-  _isActive: 0
+  _isActive: 1
   _id: 2
   _name: DirectShot
   _thumbnail: Sprites/SkillIcons/skill_090
@@ -170,7 +171,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 371705ece2f2f4243a833a0b72097981, type: 3}
   m_Name: 006_FireShot
   m_EditorClassIdentifier: 
-  _isActive: 0
+  _isActive: 1
   _id: 6
   _name: FireShot
   _thumbnail: Sprites/SkillIcons/skill_034
@@ -200,9 +201,9 @@ MonoBehaviour:
   _isActive: 1
   _id: 7
   _name: PositionShot
-  _thumbnail: Sprites/SkillIcons/skill_029
+  _thumbnail: Sprites/SkillIcons/skill_204
   _damageRate: 1
-  _durationDamageRate: 0.1
+  _durationDamageRate: 0.3
   _arrowMoveSpeed: 1
   _duration: 5
   _coolTime: 3
@@ -224,7 +225,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 371705ece2f2f4243a833a0b72097981, type: 3}
   m_Name: 009_LightningShot
   m_EditorClassIdentifier: 
-  _isActive: 0
+  _isActive: 1
   _id: 9
   _name: LightningShot
   _thumbnail: Sprites/SkillIcons/skill_078
@@ -251,7 +252,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 371705ece2f2f4243a833a0b72097981, type: 3}
   m_Name: 008_IceShot
   m_EditorClassIdentifier: 
-  _isActive: 0
+  _isActive: 1
   _id: 8
   _name: IceShot
   _thumbnail: Sprites/SkillIcons/skill_056
@@ -278,10 +279,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 371705ece2f2f4243a833a0b72097981, type: 3}
   m_Name: 010_DarkShot
   m_EditorClassIdentifier: 
-  _isActive: 0
+  _isActive: 1
   _id: 10
   _name: DarkShot
-  _thumbnail: Sprites/SkillIcons/skill_155
+  _thumbnail: Sprites/SkillIcons/skill_343
   _damageRate: 1
   _durationDamageRate: 0.1
   _arrowMoveSpeed: 0.75
@@ -292,4 +293,31 @@ MonoBehaviour:
   _moveType: 0
   _effectType: 5
   _targetType: 0
+  _arrowMoveType: 1
+--- !u!114 &7730567066814218438
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 371705ece2f2f4243a833a0b72097981, type: 3}
+  m_Name: 011_Heal
+  m_EditorClassIdentifier: 
+  _isActive: 1
+  _id: 11
+  _name: Heal
+  _thumbnail: Sprites/SkillIcons/skill_371
+  _damageRate: 0
+  _durationDamageRate: 0.5
+  _arrowMoveSpeed: 1
+  _duration: 5
+  _coolTime: 15
+  _spawnCount: 1
+  _spawnRadius: 0
+  _moveType: 0
+  _effectType: 6
+  _targetType: 1
   _arrowMoveType: 1
