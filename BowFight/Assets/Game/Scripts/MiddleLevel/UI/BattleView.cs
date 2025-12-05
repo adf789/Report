@@ -50,14 +50,7 @@ public class BattleView : BaseUnit<BattleViewModel>
 
     void LateUpdate()
     {
-        if (_blind.activeSelf)
-        {
-            var targetPosition = GetBlindTargetPosition();
-            var parent = transform.parent as RectTransform;
-            var localPos = GetLocalPosition(parent, targetPosition);
-
-            _blindCircle.localPosition = localPos;
-        }
+        OnUpdateBlind();
     }
 
     public void ShowPlayerStateBar()
@@ -165,7 +158,7 @@ public class BattleView : BaseUnit<BattleViewModel>
             Model.OnEventRightMove?.Invoke();
     }
 
-    public void OnPointUpMove(bool isLeft)
+    public void OnPointUpMove()
     {
         Model.OnEventMoveStop?.Invoke();
     }
@@ -180,14 +173,28 @@ public class BattleView : BaseUnit<BattleViewModel>
         _damagePool.Add(damageUnit);
     }
 
+    private void OnUpdateBlind()
+    {
+        if (!_blind.activeSelf)
+            return;
+
+        var targetPosition = GetBlindTargetPosition();
+        var parent = transform.parent as RectTransform;
+        var localPos = GetLocalPosition(parent, targetPosition);
+
+        _blindCircle.localPosition = localPos;
+    }
+
     private async UniTask OnEventActiveResult(bool isWin)
     {
+        // 초기 상태 설정
         _isResultOn = true;
         _victoryText.SetActive(false);
         _defeatText.SetActive(false);
         _continueText.gameObject.SetActive(false);
         _resultButton.enabled = false;
 
+        // 결과 배경화면 Fade-In 애니메이션
         Color resultColor = isWin ? Color.white : Color.black;
         Color continueTextColor = isWin ? Color.black : Color.white;
         resultColor.a = 0;
@@ -207,13 +214,16 @@ public class BattleView : BaseUnit<BattleViewModel>
         resultColor.a = 1;
         _resultScreen.color = resultColor;
 
+        // 결과 텍스트 활성화
         if (isWin)
             _victoryText.SetActive(true);
         else
             _defeatText.SetActive(true);
 
+        // 1초 대기
         await UniTask.Delay(1000);
 
+        // 버튼 및 텍스트 활성화
         _continueText.gameObject.SetActive(true);
         _resultButton.enabled = true;
     }

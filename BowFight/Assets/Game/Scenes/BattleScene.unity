@@ -1510,6 +1510,9 @@ MonoBehaviour:
   _archer: {fileID: 724729721}
   _collider: {fileID: 1000186905}
   _rigidBody: {fileID: 1000186906}
+  _groundLayer:
+    serializedVersion: 2
+    m_Bits: 128
   _shootDelay: 1
   _jumpForce: 350
   _idleDuration: 0.5
@@ -3454,6 +3457,9 @@ MonoBehaviour:
   _archer: {fileID: 733036687}
   _collider: {fileID: 6546522254130142760}
   _rigidBody: {fileID: 6546522254130142761}
+  _groundLayer:
+    serializedVersion: 2
+    m_Bits: 128
   _shootDelay: 1
   _jumpForce: 350
 --- !u!4 &6546522254130142755 stripped

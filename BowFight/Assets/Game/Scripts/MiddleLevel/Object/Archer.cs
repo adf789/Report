@@ -5,18 +5,16 @@ using UnityEngine;
 public class Archer : MonoBehaviour, ITarget
 {
     public MoveState MoveState => _moveState;
-    public CrowdControlState CrowdControlState => _crowdControlState;
-    public BowLoadState BowLoadState => _archerAnimation.BowState;
     public float MoveSpeed => _moveSpeed;
     public float DashSpeed => _dashSpeed;
     public float MaxHP => _hp;
     public float CurrentHP => _currentHp;
+    public float AnimationSpeed => _archerAnimation.Speed;
     public bool IsFlip => _isFlip;
     public int LoadSkillCount => _loadSkills != null ? _loadSkills.Count : 0;
     public int InstanceID => gameObject.GetInstanceID();
 
     [Header("References")]
-    [SerializeField] private Animator _animator;
     [SerializeField] private ArcherAnimation _archerAnimation;
     [SerializeField] private Rigidbody2D _rigidbody;
     [SerializeField] private Collider2D _targetCollider;
@@ -61,6 +59,7 @@ public class Archer : MonoBehaviour, ITarget
         OnUpdateBuff();
     }
 
+    #region SET AND MODIFY VALUES
     public void Initialize()
     {
         _currentHp = _hp;
@@ -77,47 +76,14 @@ public class Archer : MonoBehaviour, ITarget
         _onEventShowDamage = onEventShowDamage;
     }
 
-    public void Shoot()
+    public void SetArrowPool(ArrowObjectPool arrowPool)
     {
-        _animator.SetTrigger(AnimationState.Shoot.ToString());
+        _arrowPool = arrowPool;
     }
 
-    public void ReadySkillShoot(SkillTableData skillData)
+    public void SetTarget(ITarget target)
     {
-        if (skillData.TargetType == SkillTargetType.Self)
-        {
-            ApplySelfSkill(skillData);
-        }
-        else
-        {
-            ReloadSkillArrow(skillData);
-
-            CancelBowAnimation();
-
-            _animator.SetTrigger(AnimationState.SkillShootReady.ToString());
-        }
-    }
-
-    public void SkillShoot()
-    {
-        _animator.SetTrigger(AnimationState.SkillShoot.ToString());
-    }
-
-    public void Move(MoveState state)
-    {
-        _moveState = state;
-
-        // 쇼크 상태면 움직일 수 없게
-        if (_crowdControlState.HasFlag(CrowdControlState.Shock))
-            _moveState = MoveState.None;
-    }
-
-    public void ImmediateStopMove()
-    {
-        Move(MoveState.None);
-
-        _moveDirection = 0;
-        _animator.SetFloat("MoveDirection", _moveDirection);
+        _target = target;
     }
 
     private void AddCrowdControl(CrowdControlState state)
@@ -127,7 +93,7 @@ public class Archer : MonoBehaviour, ITarget
         if (state == CrowdControlState.Shock)
             Move(MoveState.None);
         else if (state == CrowdControlState.Freeze)
-            _animator.speed = 0.3f;
+            _archerAnimation.SetSpeed(0.3f);
     }
 
     private void RemoveCrowdControl(CrowdControlState state)
@@ -135,27 +101,7 @@ public class Archer : MonoBehaviour, ITarget
         _crowdControlState &= ~state;
 
         if (state == CrowdControlState.Freeze)
-            _animator.speed = 1f;
-    }
-
-    public void Jump()
-    {
-        _animator.SetBool(AnimationState.Jump.ToString(), true);
-    }
-
-    public void JumpLand()
-    {
-        _animator.SetBool(AnimationState.Jump.ToString(), false);
-    }
-
-    public void SetArrowPool(ArrowObjectPool arrowPool)
-    {
-        _arrowPool = arrowPool;
-    }
-
-    public void SetTarget(ITarget target)
-    {
-        _target = target;
+            _archerAnimation.SetSpeed(1f);
     }
 
     private void AddHp(float value)
@@ -168,6 +114,18 @@ public class Archer : MonoBehaviour, ITarget
         _onEventUpdateHp?.Invoke();
     }
 
+    private void ApplySelfSkill(SkillTableData skillData)
+    {
+        for (int i = 0; i < skillData.SpawnCount; i++)
+        {
+            float damage = _attackDamage * skillData.DamageRate / skillData.SpawnCount;
+
+            OnApplyArrowEffect(GetPosition(), damage, skillData);
+        }
+    }
+    #endregion SET VALUES
+
+    #region GET VALUE
     public Vector3 GetPosition()
     {
         return _targetCollider ? _targetCollider.bounds.center : transform.position;
@@ -186,6 +144,152 @@ public class Archer : MonoBehaviour, ITarget
         }
     }
 
+    private Arrow GetArrow(Vector3 position)
+    {
+        if (!_arrowPool)
+        {
+            Debug.LogError("Arrow pool is null");
+            return null;
+        }
+
+        if (_target == null)
+        {
+            Debug.LogError("Target is null");
+            return null;
+        }
+
+        var arrow = _arrowPool.Get();
+
+        arrow.SetEventReturnToPool(OnEventArrowReturnToPool);
+        arrow.SetPosition(position);
+
+        return arrow;
+    }
+
+    private IBuffData GetBuffData(SkillTableData skillData)
+    {
+        if (skillData == null)
+            return null;
+
+        switch (skillData.EffectType)
+        {
+            case SkillEffectType.Fire:
+                return new BurningDebuffData(skillData, _attackDamage, Time.time);
+
+            case SkillEffectType.Poison:
+                return new PoisonDebuffData(skillData, _attackDamage, Time.time);
+
+            case SkillEffectType.Ice:
+                return new FreezeDebuffData(skillData, _attackDamage, Time.time);
+
+            case SkillEffectType.Lightning:
+                return new ShockDebuffData(skillData, _attackDamage, Time.time);
+
+            case SkillEffectType.Dark:
+                return new BlindDebuffData(skillData, _attackDamage, Time.time);
+
+            case SkillEffectType.Heal:
+                return new HealBuffData(skillData, _attackDamage, Time.time);
+
+            default:
+                return null;
+        }
+    }
+
+    private Vector3 GetRandomPosition()
+    {
+        var bounds = _targetCollider.bounds;
+
+        float x = UnityEngine.Random.Range(bounds.min.x, bounds.max.x);
+        float y = UnityEngine.Random.Range(bounds.min.y, bounds.max.y);
+
+        return new Vector3(x, y, 0);
+    }
+    #endregion GET VALUE
+
+    #region CHECK CONDITION
+    private bool CheckAlreadyAffectedBuff(uint id)
+    {
+        foreach (var buff in _affectedBuffs)
+        {
+            if (buff.ID == id)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    #endregion
+
+    #region MOVE
+    public void Move(MoveState state)
+    {
+        _moveState = state;
+
+        // 쇼크 상태면 움직일 수 없게
+        if (_crowdControlState.HasFlag(CrowdControlState.Shock))
+            _moveState = MoveState.None;
+    }
+
+    public void ImmediateStopMove()
+    {
+        Move(MoveState.None);
+
+        _moveDirection = 0;
+        _archerAnimation.SetFloat(AnimationParameter.MoveDirection, _moveDirection);
+    }
+
+    public void Jump()
+    {
+        _archerAnimation.SetBool(AnimationParameter.Jump, true);
+    }
+
+    public void JumpLand()
+    {
+        _archerAnimation.SetBool(AnimationParameter.Jump, false);
+    }
+    #endregion MOVE
+
+    #region SHOOT ARROW
+    public void Shoot()
+    {
+        _archerAnimation.SetTrigger(AnimationParameter.Shoot);
+    }
+
+    public void ReadySkillShoot(SkillTableData skillData)
+    {
+        if (skillData.TargetType == SkillTargetType.Self)
+        {
+            ApplySelfSkill(skillData);
+        }
+        else
+        {
+            ReloadSkillArrow(skillData);
+
+            CancelBowAnimation();
+
+            _archerAnimation.SetTrigger(AnimationParameter.SkillShootReady);
+        }
+    }
+
+    public void SkillShoot()
+    {
+        _archerAnimation.SetTrigger(AnimationParameter.SkillShoot);
+    }
+    #endregion SHOOT ARROW
+
+    #region ANIMATION
+    private void CancelBowAnimation()
+    {
+        if (_archerAnimation.BowState == BowLoadState.Load)
+        {
+            _archerAnimation.CancelBowAnimation();
+        }
+    }
+    #endregion
+
+    #region CALLBACK EVENT
     public void OnDamaged(Arrow arrow)
     {
         if (arrow == null)
@@ -249,7 +353,7 @@ public class Archer : MonoBehaviour, ITarget
                 break;
         }
 
-        _animator.SetFloat("MoveDirection", _moveDirection);
+        _archerAnimation.SetFloat(AnimationParameter.MoveDirection, _moveDirection);
     }
 
     private void OnUpdateBuff()
@@ -344,73 +448,13 @@ public class Archer : MonoBehaviour, ITarget
         }
     }
 
-    private void ArrowReturnToPool(Arrow arrow)
+    private void OnEventArrowReturnToPool(Arrow arrow)
     {
         _arrowPool?.Add(arrow);
     }
+    #endregion CALLBACK EVENT
 
-    private Arrow GetArrow(Vector3 position)
-    {
-        if (!_arrowPool)
-        {
-            Debug.LogError("Arrow pool is null");
-            return null;
-        }
-
-        if (_target == null)
-        {
-            Debug.LogError("Target is null");
-            return null;
-        }
-
-        var arrow = _arrowPool.Get();
-
-        arrow.SetEventReturnToPool(ArrowReturnToPool);
-        arrow.SetPosition(position);
-
-        return arrow;
-    }
-
-    private IBuffData GetBuffData(SkillTableData skillData)
-    {
-        if (skillData == null)
-            return null;
-
-        switch (skillData.EffectType)
-        {
-            case SkillEffectType.Fire:
-                return new BurningDebuffData(skillData, _attackDamage, Time.time);
-
-            case SkillEffectType.Poison:
-                return new PoisonDebuffData(skillData, _attackDamage, Time.time);
-
-            case SkillEffectType.Ice:
-                return new FreezeDebuffData(skillData, _attackDamage, Time.time);
-
-            case SkillEffectType.Lightning:
-                return new ShockDebuffData(skillData, _attackDamage, Time.time);
-
-            case SkillEffectType.Dark:
-                return new BlindDebuffData(skillData, _attackDamage, Time.time);
-
-            case SkillEffectType.Heal:
-                return new HealBuffData(skillData, _attackDamage, Time.time);
-
-            default:
-                return null;
-        }
-    }
-
-    private Vector3 GetRandomPosition()
-    {
-        var bounds = _targetCollider.bounds;
-
-        float x = UnityEngine.Random.Range(bounds.min.x, bounds.max.x);
-        float y = UnityEngine.Random.Range(bounds.min.y, bounds.max.y);
-
-        return new Vector3(x, y, 0);
-    }
-
+    #region ARROW FUNCTION
     private void FireArrow(Vector3 position)
     {
         if (_loadSkills.Count > 0)
@@ -452,39 +496,9 @@ public class Archer : MonoBehaviour, ITarget
         arrow.StartMove(skillData);
     }
 
-    private void ApplySelfSkill(SkillTableData skillData)
-    {
-        for (int i = 0; i < skillData.SpawnCount; i++)
-        {
-            float damage = _attackDamage * skillData.DamageRate / skillData.SpawnCount;
-
-            OnApplyArrowEffect(GetPosition(), damage, skillData);
-        }
-    }
-
     private void ReloadSkillArrow(SkillTableData skillData)
     {
         _loadSkills.Enqueue(skillData);
     }
-
-    private void CancelBowAnimation()
-    {
-        if (_archerAnimation.BowState == BowLoadState.Load)
-        {
-            _archerAnimation.CancelBowAnimation();
-        }
-    }
-
-    private bool CheckAlreadyAffectedBuff(uint id)
-    {
-        foreach (var buff in _affectedBuffs)
-        {
-            if (buff.ID == id)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
+    #endregion ARROW FUNCTION
 }

@@ -1,8 +1,5 @@
 using UnityEngine;
 
-/// <summary>
-/// Move 상태: 이동 후 Attack 또는 Skill 상태로 전환
-/// </summary>
 public class AIState_Move : AIState
 {
     private float _skillDelay;
@@ -10,10 +7,9 @@ public class AIState_Move : AIState
     private float _elapsedSkillTime;
     private float _elapsedMoveTime;
     private MoveState _moveState;
-
     private System.Action<MoveState> _onEventSetMove = null;
 
-    public AIState_Move(AIController controller) : base(controller)
+    public AIState_Move(System.Func<AIStateType, AIState> onEventStateGet) : base(onEventStateGet)
     {
     }
 
@@ -23,6 +19,7 @@ public class AIState_Move : AIState
         _moveDelay = 1f;
         _elapsedSkillTime = 0f;
         _elapsedMoveTime = 0f;
+        _moveState = MoveState.None;
 
         SetMoveState();
     }
@@ -56,7 +53,7 @@ public class AIState_Move : AIState
         bool shouldUseSkill = _elapsedSkillTime >= _skillDelay;
 
         if (shouldUseSkill)
-            return _controller.GetState<AIState_Skill>();
+            return GetState(AIStateType.Skill);
 
         return null;
     }

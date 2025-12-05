@@ -39,9 +39,9 @@ public class AIController : BaseController
         _states = new Dictionary<System.Type, AIState>();
 
         // 모든 상태 생성 및 등록
-        RegisterState(new AIState_Idle(this, _idleDuration));
-        RegisterState(new AIState_Move(this));
-        RegisterState(new AIState_Skill(this));
+        RegisterState(new AIState_Idle(GetState, _idleDuration));
+        RegisterState(new AIState_Move(GetState));
+        RegisterState(new AIState_Skill(GetState));
 
         // 상태 머신 시작 (Idle부터 시작)
         _stateMachine.Initialize(GetState<AIState_Idle>());
@@ -81,10 +81,7 @@ public class AIController : BaseController
         }
     }
 
-    /// <summary>
-    /// 상태 가져오기
-    /// </summary>
-    public T GetState<T>() where T : AIState
+    private T GetState<T>() where T : AIState
     {
         System.Type stateType = typeof(T);
         if (_states.TryGetValue(stateType, out AIState state))
@@ -96,24 +93,15 @@ public class AIController : BaseController
         return null;
     }
 
-    /// <summary>
-    /// 현재 상태 확인
-    /// </summary>
-    public AIState GetCurrentState()
+    private AIState GetState(AIStateType stateType)
     {
-        return _stateMachine?.CurrentState;
-    }
-
-    /// <summary>
-    /// 강제 상태 전환 (외부에서 필요 시 사용)
-    /// </summary>
-    public void ForceChangeState<T>() where T : AIState
-    {
-        T state = GetState<T>();
-        if (state != null)
+        return stateType switch
         {
-            _stateMachine?.ChangeState(state);
-        }
+            AIStateType.Idle => GetState<AIState_Idle>(),
+            AIStateType.Move => GetState<AIState_Move>(),
+            AIStateType.Skill => GetState<AIState_Skill>(),
+            _ => GetState<AIState_Idle>(),
+        };
     }
 
     private void SetMove(MoveState direction)

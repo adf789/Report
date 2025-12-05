@@ -651,7 +651,7 @@ MonoBehaviour:
         - m_Target: {fileID: 339056420615332634}
           m_TargetAssemblyTypeName: BattleView, Game.MiddleLevel
           m_MethodName: OnPointUpMove
-          m_Mode: 6
+          m_Mode: 1
           m_Arguments:
             m_ObjectArgument: {fileID: 0}
             m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
@@ -667,7 +667,7 @@ MonoBehaviour:
         - m_Target: {fileID: 339056420615332634}
           m_TargetAssemblyTypeName: BattleView, Game.MiddleLevel
           m_MethodName: OnPointUpMove
-          m_Mode: 6
+          m_Mode: 1
           m_Arguments:
             m_ObjectArgument: {fileID: 0}
             m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
@@ -1081,7 +1081,7 @@ MonoBehaviour:
         - m_Target: {fileID: 339056420615332634}
           m_TargetAssemblyTypeName: BattleView, Game.MiddleLevel
           m_MethodName: OnPointUpMove
-          m_Mode: 6
+          m_Mode: 1
           m_Arguments:
             m_ObjectArgument: {fileID: 0}
             m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
@@ -1097,7 +1097,7 @@ MonoBehaviour:
         - m_Target: {fileID: 339056420615332634}
           m_TargetAssemblyTypeName: BattleView, Game.MiddleLevel
           m_MethodName: OnPointUpMove
-          m_Mode: 6
+          m_Mode: 1
           m_Arguments:
             m_ObjectArgument: {fileID: 0}
             m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine

@@ -1,11 +1,10 @@
-public enum AnimationState
+public enum AnimationParameter
 {
-    Idle,
-    Move,
     Jump,
     Shoot,
     SkillShoot,
-    SkillShootReady
+    SkillShootReady,
+    MoveDirection
 }
 
 public enum BowLoadState
@@ -84,4 +83,11 @@ public enum BuffType
     Shock,
     Blind,
     Heal
+}
+
+public enum AIStateType
+{
+    Idle,
+    Move,
+    Skill
 }

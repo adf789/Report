@@ -1,14 +1,11 @@
 using UnityEngine;
 
-/// <summary>
-/// Idle 상태: 0.5초 대기 후 Move로 전환
-/// </summary>
 public class AIState_Idle : AIState
 {
     private float _idleDuration;
     private float _elapsedTime;
 
-    public AIState_Idle(AIController controller, float duration = 0.5f) : base(controller)
+    public AIState_Idle(System.Func<AIStateType, AIState> onEventStateGet, float duration = 0.5f) : base(onEventStateGet)
     {
         _idleDuration = duration;
     }
@@ -18,10 +15,11 @@ public class AIState_Idle : AIState
         _elapsedTime = 0f;
     }
 
-    public override void OnUpdate()
+    public override void OnFixedUpdate()
     {
-        _elapsedTime += Time.deltaTime;
+        _elapsedTime += Time.fixedDeltaTime;
     }
+
 
     public override void OnExit()
     {
@@ -30,10 +28,9 @@ public class AIState_Idle : AIState
 
     public override AIState CheckTransition()
     {
-        // 0.5초 경과 시 Move 상태로 전환
         if (_elapsedTime >= _idleDuration)
         {
-            return _controller.GetState<AIState_Move>();
+            return GetState(AIStateType.Move);
         }
 
         return null;

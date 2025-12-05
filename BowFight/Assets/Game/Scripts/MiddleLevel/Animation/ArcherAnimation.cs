@@ -7,6 +7,7 @@ using UnityEngine;
 public class ArcherAnimation : MonoBehaviour
 {
     public BowLoadState BowState { get; private set; }
+    public float Speed { get => _animator.speed; }
 
     [Header("Bow")]
     [SerializeField] private LineRenderer _bowstringLine;
@@ -56,6 +57,26 @@ public class ArcherAnimation : MonoBehaviour
             _originLimb01Angles = _limb01.localEulerAngles;
             _originLimb02Angles = _limb02.localEulerAngles;
         }
+    }
+
+    public void SetFloat(AnimationParameter parameter, float value)
+    {
+        _animator.SetFloat(parameter.ToString(), value);
+    }
+
+    public void SetBool(AnimationParameter parameter, bool value)
+    {
+        _animator.SetBool(parameter.ToString(), value);
+    }
+
+    public void SetTrigger(AnimationParameter parameter)
+    {
+        _animator.SetTrigger(parameter.ToString());
+    }
+
+    public void SetSpeed(float value)
+    {
+        _animator.speed = value;
     }
 
     private void BindAnimationEvents()

@@ -1,39 +1,25 @@
 using UnityEngine;
 
-/// <summary>
-/// Skill 상태: 스킬 사용 후 Idle로 전환
-/// </summary>
 public class AIState_Skill : AIState
 {
     public int SkillCount => _coolTimes != null ? _coolTimes.Length : 0;
     private int _useSkillIndex;
-    private bool _skillExecuted;
     private float[] _coolTimes;
     private float[] _useSkillTimes;
 
     private System.Func<int, bool> _onEventUseSkill = null;
     private System.Func<bool> _onEventHasLoadSkill = null;
 
-    public AIState_Skill(AIController controller) : base(controller)
+    public AIState_Skill(System.Func<AIStateType, AIState> onEventStateGet) : base(onEventStateGet)
     {
     }
 
     public override void OnEnter()
     {
-        _useSkillIndex = -1;
-        _skillExecuted = false;
+        _useSkillIndex = SelectSkill();
 
         if (_onEventHasLoadSkill == null)
             Debug.LogError("AI 스킬 종료 이벤트가 등록되어 있지 않습니다.");
-    }
-
-    public override void OnUpdate()
-    {
-        if (!_skillExecuted)
-        {
-            _skillExecuted = true;
-            _useSkillIndex = SelectSkill();
-        }
     }
 
     public override void OnExit()
@@ -43,18 +29,14 @@ public class AIState_Skill : AIState
 
     public override AIState CheckTransition()
     {
-        // 스킬 완료 후 Idle로 전환
-        if (_skillExecuted)
+        if (_useSkillIndex >= 0)
         {
-            if (_useSkillIndex >= 0)
-            {
-                ExecuteSkill(_useSkillIndex);
-                _useSkillIndex = -1;
-            }
-
-            if (_onEventHasLoadSkill != null & !_onEventHasLoadSkill())
-                return _controller.GetState<AIState_Move>();
+            ExecuteSkill(_useSkillIndex);
+            _useSkillIndex = -1;
         }
+
+        if (_onEventHasLoadSkill != null & !_onEventHasLoadSkill())
+            return GetState(AIStateType.Move);
 
         return null;
     }

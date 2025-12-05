@@ -3,23 +3,25 @@ using UnityEngine;
 public class BaseController : MonoBehaviour
 {
     public Archer Archer => _archer;
-    public int SkillCount => _skillDatas != null ? _skillDatas.Length : 0;
 
+    [Header("References")]
     [SerializeField] protected Archer _archer;
     [SerializeField] protected Collider2D _collider;
     [SerializeField] protected Rigidbody2D _rigidBody;
-    [SerializeField] protected float _shootDelay = 0.3f;
-    [SerializeField] protected float _jumpForce = 10f;
+
+    [Header("Values")]
+    [SerializeField] protected float _shootDelay = 1f;
+    [SerializeField] protected float _jumpForce = 350f;
 
     protected SkillTableData[] _skillDatas = null;
     protected float _minX;
     protected float _maxX;
     protected bool _isPause = false;
     private float _shootTime;
-    private float _accelation = 0f;
-    private float _prevVelocityY = 0f;
-    private float _useSkillTime = 0f;
-    private float _remainDashTime = 0f;
+    private float _accelation;
+    private float _prevVelocityY;
+    private float _useSkillTime;
+    private float _remainDashTime;
     private bool _isJumping = false;
 
     private readonly int ATTACK_FIRST_DELAY = 2;
@@ -29,7 +31,7 @@ public class BaseController : MonoBehaviour
 
     public virtual void Initialize(SkillTableData[] skillDatas)
     {
-        _shootTime = Time.realtimeSinceStartup + ATTACK_FIRST_DELAY;
+        _shootTime = Time.time + ATTACK_FIRST_DELAY;
         _skillDatas = skillDatas;
 
         _archer.Initialize();
@@ -44,14 +46,6 @@ public class BaseController : MonoBehaviour
     public void SetPause(bool isPause)
     {
         _isPause = isPause;
-    }
-
-    public SkillTableData GetSkillData(int index)
-    {
-        if (SkillCount <= index || index < 0)
-            return default;
-
-        return _skillDatas[index];
     }
 
     protected void Jump()
@@ -75,10 +69,10 @@ public class BaseController : MonoBehaviour
 
     protected virtual void ShootArrow()
     {
-        if (Time.realtimeSinceStartup - _shootTime < _shootDelay)
+        if (Time.time - _shootTime < _shootDelay)
             return;
 
-        _shootTime = Time.realtimeSinceStartup;
+        _shootTime = Time.time;
 
         _archer.Shoot();
     }
@@ -86,6 +80,9 @@ public class BaseController : MonoBehaviour
     protected bool ShootSkillArrow(int index)
     {
         if (!CheckSkillDelay())
+            return false;
+
+        if (CheckMoveMotion())
             return false;
 
         var skillData = GetSkillData(index);
@@ -97,7 +94,7 @@ public class BaseController : MonoBehaviour
         }
 
         // 일반 공격 지연
-        _shootTime = Time.realtimeSinceStartup;
+        _shootTime = Time.time;
 
         // 스킬 준비
         _archer.ReadySkillShoot(skillData);
@@ -150,32 +147,21 @@ public class BaseController : MonoBehaviour
         if (_remainDashTime <= float.Epsilon)
             return false;
 
-        var bounds = _collider.bounds;
-        float halfSize = bounds.size.x * 0.5f;
-
-        // 방향 전환 유무
-        int flip = _archer.IsFlip ? -1 : 1;
-
         // 가속력 변화
-        _accelation = Mathf.MoveTowards(_accelation, _archer.MoveSpeed * _archer.DashSpeed, _archer.MoveSpeed * _archer.DashSpeed * Time.fixedDeltaTime * ACCELATION_WEIGHT);
+        AddAccelation(_archer.DashSpeed);
 
-        // 앞쪽 범위 초과 체크
-        if (!_archer.IsFlip && transform.position.x + halfSize >= _maxX)
-        {
-            OnAfterDash();
-            return true;
-        }
-        else if (_archer.IsFlip && transform.position.x - halfSize <= _minX)
+        // 범위 초과 체크
+        if (CheckMoveLimit(_archer.MoveState))
         {
             OnAfterDash();
             return true;
         }
 
-        // 앞쪽으로 이동
-        transform.Translate(-Vector3.left * flip * _accelation * Time.fixedDeltaTime);
+        // 이동 반영
+        MovePosition(_archer.MoveState);
 
+        // 대쉬 남은 시간 체크
         _remainDashTime = Mathf.Max(0, _remainDashTime - Time.fixedDeltaTime);
-
         if (_remainDashTime <= float.Epsilon)
             OnAfterDash();
 
@@ -187,7 +173,7 @@ public class BaseController : MonoBehaviour
         // 정지
         if (_archer.MoveState == MoveState.None)
         {
-            _accelation = 0f;
+            ResetAccelation();
 
             if (!_isJumping)
                 ShootArrow();
@@ -195,37 +181,12 @@ public class BaseController : MonoBehaviour
             return;
         }
 
-        var bounds = _collider.bounds;
-        float halfSize = bounds.size.x * 0.5f;
-
-        // 방향 전환 유무
-        int flip = _archer.IsFlip ? -1 : 1;
-
         // 가속력 변화
-        _accelation = Mathf.MoveTowards(_accelation, _archer.MoveSpeed, _archer.MoveSpeed * Time.fixedDeltaTime * ACCELATION_WEIGHT);
+        AddAccelation();
 
-        if (_archer.MoveState == MoveState.BackwardMove)
-        {
-            // 뒤쪽 범위 초과 체크
-            if (!_archer.IsFlip && transform.position.x - halfSize <= _minX)
-                return;
-            else if (_archer.IsFlip && transform.position.x + halfSize >= _maxX)
-                return;
-
-            // 뒤쪽으로 이동
-            transform.Translate(Vector3.left * flip * _accelation * Time.fixedDeltaTime);
-        }
-        else if (_archer.MoveState == MoveState.ForwardMove)
-        {
-            // 앞쪽 범위 초과 체크
-            if (!_archer.IsFlip && transform.position.x + halfSize >= _maxX)
-                return;
-            else if (_archer.IsFlip && transform.position.x - halfSize <= _minX)
-                return;
-
-            // 앞쪽으로 이동
-            transform.Translate(-Vector3.left * flip * _accelation * Time.fixedDeltaTime);
-        }
+        // 제한범위내 이동 반영
+        if (!CheckMoveLimit(_archer.MoveState))
+            MovePosition(_archer.MoveState);
     }
 
     private void OnCheckSkillCondition()
@@ -247,6 +208,85 @@ public class BaseController : MonoBehaviour
 
         _archer.ImmediateStopMove();
         _archer.SkillShoot();
+    }
+
+    private void AddAccelation(float weight = 1)
+    {
+        float speed = _archer.MoveSpeed * weight;
+        float delta = _archer.MoveSpeed * weight * ACCELATION_WEIGHT * Time.fixedDeltaTime;
+
+        _accelation = Mathf.MoveTowards(_accelation, speed, delta);
+    }
+
+    private void ResetAccelation()
+    {
+        _accelation = 0;
+    }
+
+    private void MovePosition(MoveState moveState)
+    {
+        int flip = _archer.IsFlip ? -1 : 1;
+        float animationSpeed = _archer.AnimationSpeed;
+        float translateDelta = flip * _accelation * animationSpeed * Time.fixedDeltaTime;
+
+        switch (moveState)
+        {
+            case MoveState.ForwardMove:
+            case MoveState.ForwardDash:
+                {
+                    transform.Translate(-Vector3.left * translateDelta);
+                }
+                break;
+
+            case MoveState.BackwardMove:
+                {
+                    transform.Translate(Vector3.left * translateDelta);
+                }
+                break;
+        }
+    }
+
+    protected SkillTableData GetSkillData(int index)
+    {
+        if (_skillDatas == null)
+            return SkillTableData.Default();
+
+        if (_skillDatas.Length <= index || index < 0)
+            return SkillTableData.Default();
+
+        return _skillDatas[index];
+    }
+
+    private bool CheckMoveLimit(MoveState moveState)
+    {
+        // 이동 범위 offset
+        var bounds = _collider.bounds;
+        float halfSize = bounds.size.x * 0.5f;
+
+        // 이동 타입별 범위 초과 체크
+        switch (moveState)
+        {
+            case MoveState.ForwardMove:
+            case MoveState.ForwardDash:
+                {
+                    if (!_archer.IsFlip && transform.position.x + halfSize >= _maxX)
+                        return true;
+                    else if (_archer.IsFlip && transform.position.x - halfSize <= _minX)
+                        return true;
+                }
+                return false;
+
+            case MoveState.BackwardMove:
+                {
+                    if (!_archer.IsFlip && transform.position.x - halfSize <= _minX)
+                        return true;
+                    else if (_archer.IsFlip && transform.position.x + halfSize >= _maxX)
+                        return true;
+                }
+                return false;
+        }
+
+        return true;
     }
 
     private bool CheckJumpHighestPoint()
@@ -272,5 +312,10 @@ public class BaseController : MonoBehaviour
         _useSkillTime = Time.realtimeSinceStartup;
 
         return true;
+    }
+
+    private bool CheckMoveMotion()
+    {
+        return _isJumping || _archer.MoveState == MoveState.ForwardDash;
     }
 }
