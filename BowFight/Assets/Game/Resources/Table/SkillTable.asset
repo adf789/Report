@@ -15,7 +15,7 @@ MonoBehaviour:
   _isActive: 1
   _id: 5
   _name: DashShot
-  _thumbnail: Sprites/SkillIcons/skill_216
+  _thumbnail: Sprites/SkillIcons/NewSkill_05
   _damageRate: 0.8
   _durationDamageRate: 0.1
   _arrowMoveSpeed: 2
@@ -42,7 +42,7 @@ MonoBehaviour:
   _isActive: 1
   _id: 1
   _name: JumpShot
-  _thumbnail: Sprites/SkillIcons/skill_024
+  _thumbnail: Sprites/SkillIcons/NewSkill_01
   _damageRate: 1
   _durationDamageRate: 0.1
   _arrowMoveSpeed: 1
@@ -69,7 +69,7 @@ MonoBehaviour:
   _isActive: 1
   _id: 3
   _name: DirectJumpShot
-  _thumbnail: Sprites/SkillIcons/skill_103
+  _thumbnail: Sprites/SkillIcons/NewSkill_03
   _damageRate: 1
   _durationDamageRate: 0.1
   _arrowMoveSpeed: 1
@@ -120,7 +120,7 @@ MonoBehaviour:
   _isActive: 1
   _id: 4
   _name: HighShot
-  _thumbnail: Sprites/SkillIcons/skill_214
+  _thumbnail: Sprites/SkillIcons/NewSkill_04
   _damageRate: 1.2
   _durationDamageRate: 0.1
   _arrowMoveSpeed: 1
@@ -147,7 +147,7 @@ MonoBehaviour:
   _isActive: 1
   _id: 2
   _name: DirectShot
-  _thumbnail: Sprites/SkillIcons/skill_090
+  _thumbnail: Sprites/SkillIcons/NewSkill_02
   _damageRate: 1
   _durationDamageRate: 0.1
   _arrowMoveSpeed: 1
@@ -174,7 +174,7 @@ MonoBehaviour:
   _isActive: 1
   _id: 6
   _name: FireShot
-  _thumbnail: Sprites/SkillIcons/skill_034
+  _thumbnail: Sprites/SkillIcons/NewSkill_06
   _damageRate: 1
   _durationDamageRate: 0.1
   _arrowMoveSpeed: 1
@@ -201,7 +201,7 @@ MonoBehaviour:
   _isActive: 1
   _id: 7
   _name: PositionShot
-  _thumbnail: Sprites/SkillIcons/skill_204
+  _thumbnail: Sprites/SkillIcons/NewSkill_07
   _damageRate: 1
   _durationDamageRate: 0.3
   _arrowMoveSpeed: 1
@@ -228,7 +228,7 @@ MonoBehaviour:
   _isActive: 1
   _id: 9
   _name: LightningShot
-  _thumbnail: Sprites/SkillIcons/skill_078
+  _thumbnail: Sprites/SkillIcons/NewSkill_09
   _damageRate: 1
   _durationDamageRate: 0.1
   _arrowMoveSpeed: 2
@@ -255,7 +255,7 @@ MonoBehaviour:
   _isActive: 1
   _id: 8
   _name: IceShot
-  _thumbnail: Sprites/SkillIcons/skill_056
+  _thumbnail: Sprites/SkillIcons/NewSkill_08
   _damageRate: 1
   _durationDamageRate: 0.1
   _arrowMoveSpeed: 1
@@ -282,7 +282,7 @@ MonoBehaviour:
   _isActive: 1
   _id: 10
   _name: DarkShot
-  _thumbnail: Sprites/SkillIcons/skill_343
+  _thumbnail: Sprites/SkillIcons/NewSkill_10
   _damageRate: 1
   _durationDamageRate: 0.1
   _arrowMoveSpeed: 0.75
@@ -309,7 +309,7 @@ MonoBehaviour:
   _isActive: 1
   _id: 11
   _name: Heal
-  _thumbnail: Sprites/SkillIcons/skill_371
+  _thumbnail: Sprites/SkillIcons/NewSkill_11
   _damageRate: 0
   _durationDamageRate: 0.5
   _arrowMoveSpeed: 1
