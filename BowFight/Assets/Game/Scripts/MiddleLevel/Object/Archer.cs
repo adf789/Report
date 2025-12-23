@@ -467,7 +467,7 @@ public class Archer : MonoBehaviour, ITarget
                 // 화살 데미지 설정
                 float damage = _attackDamage * skillData.DamageRate / skillData.SpawnCount;
 
-                // 화살 위치 설멍
+                // 화살 위치 설정
                 Vector2 randomCircle = UnityEngine.Random.insideUnitCircle * skillData.SpawnRadius;
                 Vector3 newPosition = position + (Vector3)randomCircle;
                 float minHeight = GetMinSpawnHeight();
